@@ -1,0 +1,4 @@
+project_limit_bytes = 21474836480
+warning_bytes = 19327352832
+min_free_bytes = 32212254720
+extra_owned_paths = []

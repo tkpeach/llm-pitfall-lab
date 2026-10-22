@@ -6,3 +6,5 @@ __pycache__/
 models/
 runs/
 core
+*.egg-info/
+build/

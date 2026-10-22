@@ -1,0 +1,32 @@
+[
+  {
+    "id": "chinese-count-money-date",
+    "input": "订单号 A-102，订购蓝色笔记本三本，单价人民币 12.50 元，要求 2026 年 11 月 2 日送达。",
+    "gold": {"order_id": "A-102", "product": "蓝色笔记本", "quantity": 3, "unit_price_minor": 1250, "currency": "CNY", "delivery_date": "2026-11-02"}
+  },
+  {
+    "id": "missing-fields",
+    "input": "商品是透明文件夹，需要两个。其他信息未提供。",
+    "gold": {"order_id": null, "product": "透明文件夹", "quantity": 2, "unit_price_minor": null, "currency": null, "delivery_date": null}
+  },
+  {
+    "id": "usd",
+    "input": "订单 US-09：旅行杯，数量 1，单价 9.99 美元，送达日期 2026-12-01。",
+    "gold": {"order_id": "US-09", "product": "旅行杯", "quantity": 1, "unit_price_minor": 999, "currency": "USD", "delivery_date": "2026-12-01"}
+  },
+  {
+    "id": "total-not-unit-price",
+    "input": "订单 B-208，购买纸箱四个，总价人民币 80 元，单价未说明。明天送达。",
+    "gold": {"order_id": "B-208", "product": "纸箱", "quantity": 4, "unit_price_minor": null, "currency": "CNY", "delivery_date": null}
+  },
+  {
+    "id": "explicit-correction",
+    "input": "订单 C-3 商品为铅笔，数量先写两支，现明确改为五支。单价人民币 0.80 元。",
+    "gold": {"order_id": "C-3", "product": "铅笔", "quantity": 5, "unit_price_minor": 80, "currency": "CNY", "delivery_date": null}
+  },
+  {
+    "id": "no-order-data",
+    "input": "客户尚未提供订单号、商品、数量、金额或交付日期。",
+    "gold": {"order_id": null, "product": null, "quantity": null, "unit_price_minor": null, "currency": null, "delivery_date": null}
+  }
+]

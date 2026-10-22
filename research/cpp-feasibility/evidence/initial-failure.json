@@ -1,0 +1,26 @@
+{
+  "status": "failed",
+  "error": "RuntimeError('C++ worker failed: ERROR: open checkpoint staging failed\\n')",
+  "platform": "macOS-15.7.3-arm64-arm-64bit",
+  "mlx": "0.32.4",
+  "mlx_lm": "0.32.2",
+  "source_sha256": {
+    "CMakeLists.txt": "afd1170e3ce0832e1a20e4b5fd464d9af49f7e11b2f4e9be9faf9d3cb0d35a77",
+    "probe.cpp": "3d79be2bc2efe9a7d396f0de2cb8ae193daebb7e22d81cdf0f2ec6b72606b639",
+    "validate.py": "5f6799279f5a877f292cd6fa738265c235ebd6922775464f731822c38ecdc797"
+  },
+  "passed_before_failure": 28,
+  "failed_worker": {
+    "args": [
+      "train",
+      "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-170857/continuous.safetensors",
+      "8"
+    ],
+    "returncode": 1,
+    "stdout": "MLX 0.32.4 device=GPU\n",
+    "stderr": "ERROR: open checkpoint staging failed\n",
+    "seconds": 0.09836666600313038
+  },
+  "observed_file": "continuous.safetensors.tmp.safetensors",
+  "fix": "staging path now ends with .tmp.safetensors; original save/fsync/rename path retained"
+}

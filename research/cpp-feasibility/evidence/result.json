@@ -1,0 +1,899 @@
+{
+  "scope": "synthetic C++/MLX feasibility, not full-model acceptance",
+  "platform": "macOS-15.7.3-arm64-arm-64bit",
+  "python": "3.12.13 (main, Mar  3 2026, 12:39:30) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "mlx": "0.32.4",
+  "mlx_lm": "0.32.2",
+  "sdk": "/Users/ych/ryf/code/llm-pitfall-lab/.venv/lib/python3.12/site-packages/mlx",
+  "disk_before": {
+    "project_physical_bytes": 1352130560,
+    "volume_free_bytes": 65008664576,
+    "reserve_bytes": 134217728
+  },
+  "checks": {
+    "quantized_projection": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        1024
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "quantized_vs_dequantized": {
+      "passed": true,
+      "max_abs_error": 6.556510925292969e-07,
+      "shape": [
+        4,
+        1024
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "lora_loss": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "lora_gradient_0": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        2560
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "gradient_checkpoint_0": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        2560
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "lora_gradient_1": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        2560,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "gradient_checkpoint_1": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        2560,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "lora_gradient_2": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        1024
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "gradient_checkpoint_2": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        1024
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "gradient_through_frozen_quantized_weight": {
+      "passed": true,
+      "max_abs_error": 2.561137080192566e-09,
+      "shape": [
+        4,
+        2560
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "bf16_lora_loss": {
+      "passed": true,
+      "max_abs_error": 1.3381242752075195e-05,
+      "shape": [],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "bf16_lora_gradient_0": {
+      "passed": true,
+      "max_abs_error": 1.52587890625e-05,
+      "shape": [
+        4,
+        2560
+      ],
+      "dtype": "mlx.core.bfloat16",
+      "atol": 1e-05,
+      "rtol": 0.01
+    },
+    "bf16_lora_gradient_1": {
+      "passed": true,
+      "max_abs_error": 2.384185791015625e-07,
+      "shape": [
+        2560,
+        4
+      ],
+      "dtype": "mlx.core.bfloat16",
+      "atol": 1e-05,
+      "rtol": 0.01
+    },
+    "bf16_lora_gradient_2": {
+      "passed": true,
+      "max_abs_error": 2.384185791015625e-07,
+      "shape": [
+        4,
+        1024
+      ],
+      "dtype": "mlx.core.bfloat16",
+      "atol": 1e-05,
+      "rtol": 0.01
+    },
+    "attention": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        16,
+        8,
+        256
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "kv_prefix_decode": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        16,
+        8,
+        256
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "rms_norm": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        2560
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "rope": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        16,
+        8,
+        256
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "depthwise_conv": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        8,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "custom_metal_kernel": {
+      "passed": true,
+      "max_abs_error": 1.4901161193847656e-08,
+      "shape": [
+        4,
+        2560
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "recurrence_output": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        8,
+        32,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "recurrence_state": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        32,
+        128,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "recurrence_chunk_output": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        8,
+        32,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "recurrence_chunk_state": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        32,
+        128,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "recurrence_loss": {
+      "passed": true,
+      "max_abs_error": 3.637978807091713e-12,
+      "shape": [],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "recurrence_gradient_0": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        8,
+        16,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "recurrence_gradient_1": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        8,
+        16,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "recurrence_gradient_2": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        8,
+        32,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "recurrence_gradient_3": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        8,
+        32
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "recurrence_gradient_4": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        8,
+        32
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "recurrence_gradient_5": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        1,
+        32,
+        128,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "fused_recurrence_output": {
+      "passed": true,
+      "max_abs_error": 1.1175870895385742e-08,
+      "shape": [
+        1,
+        8,
+        32,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "fused_recurrence_state": {
+      "passed": true,
+      "max_abs_error": 3.725290298461914e-09,
+      "shape": [
+        1,
+        32,
+        128,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "fused_recurrence_gradient_0": {
+      "passed": true,
+      "max_abs_error": 1.5916157281026244e-12,
+      "shape": [
+        1,
+        8,
+        16,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "fused_recurrence_gradient_1": {
+      "passed": true,
+      "max_abs_error": 1.8189894035458565e-12,
+      "shape": [
+        1,
+        8,
+        16,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "fused_recurrence_gradient_2": {
+      "passed": true,
+      "max_abs_error": 8.526512829121202e-14,
+      "shape": [
+        1,
+        8,
+        32,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "fused_recurrence_gradient_3": {
+      "passed": true,
+      "max_abs_error": 2.8421709430404007e-13,
+      "shape": [
+        1,
+        8,
+        32
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "fused_recurrence_gradient_4": {
+      "passed": true,
+      "max_abs_error": 9.094947017729282e-13,
+      "shape": [
+        1,
+        8,
+        32
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "fused_recurrence_gradient_5": {
+      "passed": true,
+      "max_abs_error": 5.684341886080802e-14,
+      "shape": [
+        1,
+        32,
+        128,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-09,
+      "rtol": 0.0002
+    },
+    "recurrence_gate_finite_difference": {
+      "passed": true,
+      "max_abs_error": 1.6661942936480045e-09,
+      "shape": [],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-07,
+      "rtol": 0.02
+    },
+    "adam_parameter_a": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        256,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "adam_m_a": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        256,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-10,
+      "rtol": 0.0002
+    },
+    "adam_v_a": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        256,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-10,
+      "rtol": 0.0002
+    },
+    "adam_parameter_b": {
+      "passed": true,
+      "max_abs_error": 6.891787052154541e-08,
+      "shape": [
+        4,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 2e-06,
+      "rtol": 0.0002
+    },
+    "adam_m_b": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-10,
+      "rtol": 0.0002
+    },
+    "adam_v_b": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 1e-10,
+      "rtol": 0.0002
+    },
+    "resume_exact_sample_ids": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        8
+      ],
+      "dtype": "mlx.core.int32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "resume_exact_mb": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "resume_exact_vb": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "resume_exact_va": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        256,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "resume_exact_key": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        2
+      ],
+      "dtype": "mlx.core.uint32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "resume_exact_ma": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        256,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "resume_exact_b": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "resume_exact_losses": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        8
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "resume_exact_a": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        256,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "signal_resume_exact_sample_ids": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        8
+      ],
+      "dtype": "mlx.core.int32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "signal_resume_exact_mb": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "signal_resume_exact_vb": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "signal_resume_exact_va": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        256,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "signal_resume_exact_key": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        2
+      ],
+      "dtype": "mlx.core.uint32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "signal_resume_exact_ma": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        256,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "signal_resume_exact_b": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        4,
+        128
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "signal_resume_exact_losses": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        8
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "signal_resume_exact_a": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [
+        256,
+        4
+      ],
+      "dtype": "mlx.core.float32",
+      "atol": 0,
+      "rtol": 0
+    },
+    "adapter_was_updated": {
+      "passed": true,
+      "max_abs_error": 0.0,
+      "shape": [],
+      "dtype": "mlx.core.bool",
+      "atol": 0,
+      "rtol": 0
+    }
+  },
+  "workers": [
+    {
+      "args": [
+        "ops",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/inputs.safetensors",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/outputs.safetensors"
+      ],
+      "returncode": 0,
+      "stdout": "MLX 0.32.4 device=GPU\noperations peak_bytes=199465480\n",
+      "stderr": "",
+      "seconds": 1.2127878749743104
+    },
+    {
+      "args": [
+        "fused",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/inputs.safetensors",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/fused.safetensors"
+      ],
+      "returncode": 0,
+      "stdout": "MLX 0.32.4 device=GPU\nfused_recurrence peak_bytes=4720644\n",
+      "stderr": "",
+      "seconds": 0.031267540995031595
+    },
+    {
+      "args": [
+        "train",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/continuous.safetensors",
+        "8"
+      ],
+      "returncode": 0,
+      "stdout": "MLX 0.32.4 device=GPU\ntraining step=8 peak_bytes=215004\n",
+      "stderr": "",
+      "seconds": 0.039853124995715916
+    },
+    {
+      "args": [
+        "train",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/one-step.safetensors",
+        "1"
+      ],
+      "returncode": 0,
+      "stdout": "MLX 0.32.4 device=GPU\ntraining step=1 peak_bytes=215004\n",
+      "stderr": "",
+      "seconds": 0.02972550003323704
+    },
+    {
+      "args": [
+        "train",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/paused.safetensors",
+        "3"
+      ],
+      "returncode": 0,
+      "stdout": "MLX 0.32.4 device=GPU\ntraining step=3 peak_bytes=215004\n",
+      "stderr": "",
+      "seconds": 0.03220366593450308
+    },
+    {
+      "args": [
+        "resume",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/paused.safetensors",
+        "8"
+      ],
+      "returncode": 0,
+      "stdout": "MLX 0.32.4 device=GPU\ntraining step=8 peak_bytes=214984\n",
+      "stderr": "",
+      "seconds": 0.03689212503377348
+    },
+    {
+      "args": [
+        "resume",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/signal.safetensors",
+        "8"
+      ],
+      "returncode": 0,
+      "stdout": "MLX 0.32.4 device=GPU\ntraining step=8 peak_bytes=214984\n",
+      "stderr": "",
+      "seconds": 0.041080125025473535
+    },
+    {
+      "args": [
+        "resume",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/absent.safetensors",
+        "8"
+      ],
+      "returncode": 1,
+      "stdout": "MLX 0.32.4 device=GPU\n",
+      "stderr": "ERROR: [load_safetensors] Failed to open file /Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/absent.safetensors\n",
+      "seconds": 0.005478290957398713
+    },
+    {
+      "args": [
+        "train",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/continuous.safetensors",
+        "8"
+      ],
+      "returncode": 1,
+      "stdout": "MLX 0.32.4 device=GPU\n",
+      "stderr": "ERROR: refuse to overwrite existing run\n",
+      "seconds": 0.005918250069953501
+    },
+    {
+      "args": [
+        "resume",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/wrong-identity.safetensors",
+        "8"
+      ],
+      "returncode": 1,
+      "stdout": "MLX 0.32.4 device=GPU\n",
+      "stderr": "ERROR: checkpoint identity mismatch\n",
+      "seconds": 0.025960291037335992
+    },
+    {
+      "args": [
+        "resume",
+        "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/20261022-171309/truncated.safetensors",
+        "8"
+      ],
+      "returncode": 1,
+      "stdout": "MLX 0.32.4 device=GPU\n",
+      "stderr": "ERROR: [load_safetensors] The JSON header is 642 bytes long but the file is only 32 bytes. Perhaps an incomplete download or corrupt file?\n",
+      "seconds": 0.026522999978624284
+    }
+  ],
+  "library_sha256": "bbe4ee5ab0a23bb4a95c6c5ee9ddc7520abbfbdd64615ee9fbb3ad218d44786b",
+  "binary_sha256": "51851d1de4f96ceaf4aa6dbd25123e318888dd3691726ca4643358388791aeaf",
+  "binary_dependencies": "/Users/ych/ryf/code/llm-pitfall-lab/runs/cpp-feasibility/build/cpp_probe:\n\t@rpath/libmlx.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/System/Library/Frameworks/Metal.framework/Versions/A/Metal (compatibility version 1.0.0, current version 368.12.0)\n\t/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (compatibility version 300.0.0, current version 3502.1.255)\n\t/System/Library/Frameworks/QuartzCore.framework/Versions/A/QuartzCore (compatibility version 1.2.0, current version 1.11.0)\n\t/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate (compatibility version 1.0.0, current version 4.0.0)\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 1900.180.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n",
+  "source_sha256": {
+    "CMakeLists.txt": "9eca816a45ea1d9962423da2d76da439a454d4df59684267e58884e43d32f8bf",
+    "probe.cpp": "d3d01bda468a20c0d86c3c8feb62433fa2b2473ea7995139cfba637b9f78b075",
+    "validate.py": "4975a473cb44f3b7d419aacbc6606384dbcf46fcea02e437e2652771737f0844"
+  },
+  "fused_backward": {
+    "returncode": 0,
+    "stdout": "MLX 0.32.4 device=GPU\nfused_recurrence peak_bytes=26087496\n",
+    "stderr": ""
+  },
+  "python_peak_bytes": 154059264,
+  "signal_pause": {
+    "returncode": 0,
+    "pid": 69502,
+    "seconds": 0.004022500012069941,
+    "stdout": "MLX 0.32.4 device=GPU\ntraining step=3 peak_bytes=215004\n",
+    "stderr": "",
+    "scope": "test rendezvous at update boundary; not full-model latency"
+  },
+  "status": "passed",
+  "disk_after": {
+    "project_physical_bytes": 1377558528,
+    "volume_free_bytes": 64982720512,
+    "reserve_bytes": 134217728
+  }
+}

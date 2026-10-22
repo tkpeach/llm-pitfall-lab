@@ -1,0 +1,16 @@
+[project]
+name = "llm-pitfall-lab"
+version = "0.1.0"
+description = "Observable LLM inference and post-training experiments on Apple M4"
+requires-python = ">=3.12,<3.13"
+dependencies = ["mlx==0.32.4", "mlx-lm==0.32.2"]
+
+[project.scripts]
+pitfall-lab = "llm_pitfall_lab.cli:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

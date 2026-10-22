@@ -1,0 +1,9 @@
+[project]
+name = "llm-pitfall-lab-tools"
+version = "0.1.0"
+description = "MLX C++ SDK supplier and Python numerical reference tools for LLM Pitfall Lab"
+requires-python = ">=3.12,<3.13"
+dependencies = ["mlx==0.32.4", "mlx-lm==0.32.2"]
+
+[tool.uv]
+package = false

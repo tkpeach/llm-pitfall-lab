@@ -1,0 +1,9 @@
+base_repo = "Qwen/Qwen3.5-4B"
+base_revision = "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a"
+execution_repo = "mlx-community/Qwen3.5-4B-4bit"
+execution_revision = "0e7ffd5c629ef7719d4cbc04069232580bfa9d9c"
+local_directory = "models/qwen35-4b-4bit"
+
+# The public conversion identifies its base family, not an independently proven
+# bit-for-bit conversion from base_revision. Validate the fixed execution pack.
+provenance = "community conversion; upstream exact base revision not independently verified"
