@@ -1,0 +1,57 @@
+{
+  "checked_at_utc": "2026-10-22T03:49:00.966637+00:00",
+  "scope": "GPU arithmetic, gradient/update, and config parsing only; no LLM run",
+  "python": "3.12.13",
+  "platform": "macOS-15.7.3-arm64-arm-64bit",
+  "packages": {
+    "mlx": "0.32.4",
+    "mlx-metal": "0.32.4",
+    "mlx-lm": "0.32.2",
+    "transformers": "5.20.2"
+  },
+  "device": "Device(gpu, 0)",
+  "device_info": {
+    "device_name": "Apple M4",
+    "max_recommended_working_set_size": 17179885568,
+    "memory_size": 25769803776,
+    "architecture": "applegpu_g16g",
+    "max_buffer_length": 12884901888,
+    "resource_limit": 499000
+  },
+  "matrix_product": [
+    [
+      19.0,
+      22.0
+    ],
+    [
+      43.0,
+      50.0
+    ]
+  ],
+  "gradient": [
+    [
+      0.5,
+      1.0
+    ],
+    [
+      1.5,
+      2.0
+    ]
+  ],
+  "gradient_max_abs_error": 0.0,
+  "loss_before": 7.5,
+  "loss_after_one_update": 6.768749713897705,
+  "mlx_peak_allocated_bytes": 208,
+  "granite_module_sha256": "7f43dc50e762520cbdfb147670ccbfdbc8d2412f9b9c1e141dc51d195fabc415",
+  "parsed_configs": [
+    {
+      "repo": "ibm-granite/granite-4.1-3b",
+      "layers": 40
+    },
+    {
+      "repo": "ibm-granite/granite-4.1-8b",
+      "layers": 40
+    }
+  ],
+  "status": "passed"
+}

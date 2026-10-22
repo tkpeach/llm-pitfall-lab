@@ -1,0 +1,83 @@
+{
+  "checked_at_utc": "2026-10-22T06:50:35.906460+00:00",
+  "scope": "Single recurrence operator with synthetic inputs; no weights, projections, full layers, optimizer, checkpointing or LLM training",
+  "versions": {
+    "mlx": "0.32.4",
+    "mlx-lm": "0.32.2"
+  },
+  "source_sha256": "f69e837ea68641dbb06fdb5dcc024a9a7e1d9353f08ae58c05275253a0c39428",
+  "results": [
+    {
+      "sequence_length": 16,
+      "batch": 1,
+      "qk_heads": 16,
+      "value_heads": 32,
+      "key_value_head_dim": 128,
+      "input_dtype": "bfloat16",
+      "persistent_recurrence_state_bytes": 2097152,
+      "forward_both_paths_seconds_including_compilation": 1.0329107919242233,
+      "forward_max_abs_error": 2.9802322387695312e-08,
+      "state_max_abs_error": 3.725290298461914e-09,
+      "forward_backward_seconds_including_compilation": 0.11772354098502547,
+      "active_bytes_before_backward": 264476,
+      "mlx_peak_allocated_bytes": 258008714,
+      "loss": 2.1937039207386988e-07,
+      "gradient_norms_q_k_v_a_b": [
+        2.667076159923454e-06,
+        2.366200106962424e-07,
+        2.717607650026821e-08,
+        3.705700635237008e-09,
+        1.4335695297518214e-08
+      ],
+      "status": "passed"
+    },
+    {
+      "sequence_length": 64,
+      "batch": 1,
+      "qk_heads": 16,
+      "value_heads": 32,
+      "key_value_head_dim": 128,
+      "input_dtype": "bfloat16",
+      "persistent_recurrence_state_bytes": 2097152,
+      "forward_both_paths_seconds_including_compilation": 0.04344212496653199,
+      "forward_max_abs_error": 1.9073486328125e-06,
+      "state_max_abs_error": 3.725290298461914e-09,
+      "forward_backward_seconds_including_compilation": 0.12735145899932832,
+      "active_bytes_before_backward": 1057052,
+      "mlx_peak_allocated_bytes": 737315706,
+      "loss": 2.146296509408785e-07,
+      "gradient_norms_q_k_v_a_b": [
+        1.3079787777314777e-06,
+        1.1573628455607832e-07,
+        1.3462251757800914e-08,
+        2.0477461948331666e-09,
+        7.0908177107753545e-09
+      ],
+      "status": "passed"
+    },
+    {
+      "sequence_length": 128,
+      "batch": 1,
+      "qk_heads": 16,
+      "value_heads": 32,
+      "key_value_head_dim": 128,
+      "input_dtype": "bfloat16",
+      "persistent_recurrence_state_bytes": 2097152,
+      "forward_both_paths_seconds_including_compilation": 0.03248579101637006,
+      "forward_max_abs_error": 3.814697265625e-06,
+      "state_max_abs_error": 3.725290298461914e-09,
+      "forward_backward_seconds_including_compilation": 0.19673554203473032,
+      "active_bytes_before_backward": 2113820,
+      "mlx_peak_allocated_bytes": 1280548218,
+      "loss": 1.9891893998646992e-07,
+      "gradient_norms_q_k_v_a_b": [
+        8.867196470419003e-07,
+        7.840886695476001e-08,
+        8.829799114096204e-09,
+        1.340418442907776e-09,
+        4.62706140069713e-09
+      ],
+      "status": "passed"
+    }
+  ]
+}

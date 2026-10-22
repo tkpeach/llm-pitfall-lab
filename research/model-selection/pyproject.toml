@@ -1,0 +1,12 @@
+[project]
+name = "llm-pitfall-lab"
+version = "0.1.0"
+description = "Experiments for understanding LLM inference and post-training on Apple Silicon"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "mlx==0.32.4",
+    "mlx-lm==0.32.2",
+]
+
+[tool.uv]
+package = false

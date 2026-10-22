@@ -1,0 +1,32 @@
+[
+  {
+    "repo": "mlx-community/Qwen3.5-4B-4bit",
+    "revision": "0e7ffd5c629ef7719d4cbc04069232580bfa9d9c",
+    "source": "https://huggingface.co/api/models/mlx-community/Qwen3.5-4B-4bit?blobs=true",
+    "safetensor_files": [
+      {
+        "path": "model.safetensors",
+        "bytes": 3034300695
+      }
+    ],
+    "total_safetensor_bytes": 3034300695,
+    "note": "File size, not runtime memory; language and vision content not yet inspected"
+  },
+  {
+    "repo": "mlx-community/Qwen3.5-9B-4bit",
+    "revision": "8b2b98c00a6b4d291155e4890773ca8f769aee53",
+    "source": "https://huggingface.co/api/models/mlx-community/Qwen3.5-9B-4bit?blobs=true",
+    "safetensor_files": [
+      {
+        "path": "model-00001-of-00002.safetensors",
+        "bytes": 5349771222
+      },
+      {
+        "path": "model-00002-of-00002.safetensors",
+        "bytes": 600449850
+      }
+    ],
+    "total_safetensor_bytes": 5950221072,
+    "note": "File size, not runtime memory; language and vision content not yet inspected"
+  }
+]
