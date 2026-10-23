@@ -21,7 +21,7 @@
 
 ## 构建与使用
 
-当前已建立原生构建、基础 CLI 与 GPU 微型前向/反向测试，尚未提供完整模型推理、训练或暂停恢复命令。实际能力与下一步见 [文档总入口](docs/README.md)。
+当前已建立原生构建、基础 CLI 与 GPU 微型前向/反向测试，尚未提供完整模型推理、训练或暂停恢复命令。实际能力与下一步见 [仓库现状](docs/status.md)。
 
 首次使用先按 [构建与检查](docs/build.md) 完成资源预检、辅助环境准备和 CMake 构建。默认构建目录下可执行：
 
@@ -33,4 +33,8 @@ ctest --test-dir runs/d0/build --output-on-failure --no-tests=error
 
 GPU 测试需要本机 Metal 访问能力。依赖版本、SDK 定位、完整构建步骤和检查范围统一由构建指南维护。
 
-具体需求、设计及验收见 [文档总入口](docs/README.md)。Agent 接手先读取 [AGENTS.md](AGENTS.md) 与该入口。
+## 文档与学习
+
+**[docs/README.md](docs/README.md) 是正式文档唯一总入口**，按任务导航到学习规格、模型路线、设计和操作指南。[学习笔记](learning/README.md) 整理提问与讨论中的知识点，并按要求积累有价值的真实问题案例，便于复习和复现。
+
+Agent 接手先读取 [AGENTS.md](AGENTS.md) 与文档总入口，再查看仓库现状，按需展开相关专题。

@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "verified_at": "2026-10-23T17:18:12+08:00",
+  "scope": "D0 current native build and tiny GPU forward/backward; no full-model or training acceptance",
+  "git_base_commit": "2a08f4866bc0d4063a123afaa87efe5b6e7c0ea1",
+  "git_worktree_dirty": true,
+  "environment": {
+    "platform": "macOS-15.7.3-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.13",
+    "compiler": "Apple clang version 17.0.0 (clang-1700.0.13.5)",
+    "cmake": "cmake version 4.2.3",
+    "uv": "uv 0.12.5 (Homebrew 2026-08-14 aarch64-apple-darwin)",
+    "mlx": "0.32.4",
+    "mlx_lm": "0.32.2",
+    "sdk_root": "/Users/ych/ryf/code/llm-pitfall-lab/.venv/lib/python3.12/site-packages/mlx"
+  },
+  "sdk_sha256": {
+    "lib/libmlx.dylib": "bbe4ee5ab0a23bb4a95c6c5ee9ddc7520abbfbdd64615ee9fbb3ad218d44786b",
+    "lib/mlx.metallib": "f36b01c44dd5f2d9020deb1ac6ad53dc085de81af19396694c5963ef3a12137f"
+  },
+  "source_sha256": {
+    ".python-version": "7b55f8e67b5623c4bef3fa691288da9437d79d3aba156de48d481db32ac7d16d",
+    "CMakeLists.txt": "0d6c054a2e3a370f685a19c15a30fdde2e349196d570704d1bd4d1ae37a5c6b6",
+    "cmake/build_info.hpp.in": "9f7d71077d425ef7427cea838535ec100dde7e611c9b48f61c1b255b747d7420",
+    "cmake/mlx/MLXSDK.cmake": "662cbc2c9b5909d8e8a66767645983c55c90fb31287237d74295b513e99e8d8c",
+    "cmake/mlx/locate_sdk.py": "2a671e4d59d2df2e05487129ac1ac77b0ce13d244d639e2cf2e7b89f4e1824cd",
+    "configs/resources.toml": "ec4ddfea702559d1f3ed4e42a1fb2ed4dd9eb7e99691a8f2228c0ec327e16ba5",
+    "pyproject.toml": "5bb78378d5056497f654844abe0507c2591020fbbc3075f1c14cde3acabf9ba3",
+    "src/CMakeLists.txt": "c045d9aff06f698e5b76eedf1cdf3fcdd5ca72de0fdddcbd1f1fa4468ab93d34",
+    "src/compute/CMakeLists.txt": "06c96f891d8a9c337b254b672141a8562c5f942e3561757770ced4e2371c0edc",
+    "src/compute/mlx_runtime.cpp": "200d781af93d2854b5f421cb089fa9eae40ba9a740ec95d8826de9d67dc7fc27",
+    "src/compute/mlx_runtime.hpp": "73783477df26ca277f95f9d1058cdbb377ea566acc7af9e70d4f951ae6e228a0",
+    "src/main.cpp": "af5f25441b105166598c64b53146b3060247bd7bd2197602539bdd45ff2159ae",
+    "tests/CMakeLists.txt": "49725b394fa203622c615b312bec7f68f48d1de3b36beb1f319e33264de79999",
+    "tests/checks/check_project.py": "b45c6fa0953bdbcc4672b01fe838cc4e16b333a6f64fac8e236e2c71f128ed87",
+    "tests/checks/test_checks.py": "c1d58945454d595703df4f59784590a6a5d98a6f0d0b406be18e4c2c7a99548f",
+    "tests/integration/gpu_smoke.cpp": "030d7827a72403dde0f594899dbaca87a3fa87fafad0fc04e60c969af91df74a",
+    "tests/test_cli.py": "5120c2a10b82bb153a1dc3d06fe9c3256217e32e941cea82b3c1b23ee630b67b",
+    "uv.lock": "36373ca8377d9cc6f5c66569a5f106e432b5647b59cf42d491157d126e56a60f"
+  },
+  "build_directory": "runs/d0/module-layout",
+  "commands": [
+    "cmake -S . -B runs/d0/module-layout -DCMAKE_BUILD_TYPE=Release -DPython3_EXECUTABLE=\"$PWD/.venv/bin/python\" -DLAB_MLX_ROOT=\"$(.venv/bin/python cmake/mlx/locate_sdk.py)\"",
+    "cmake --build runs/d0/module-layout -j 2",
+    "ctest --test-dir runs/d0/module-layout --output-on-failure --no-tests=error --output-junit \"$PWD/runs/d0/module-layout/ctest-current.xml\""
+  ],
+  "ctest": {
+    "total": 7,
+    "passed": 7,
+    "skipped": 0,
+    "tests": [
+      {
+        "name": "project.docs",
+        "status": "passed",
+        "output": "PASS: docs"
+      },
+      {
+        "name": "project.build_boundary",
+        "status": "passed",
+        "output": "PASS: build"
+      },
+      {
+        "name": "dependencies.sdk",
+        "status": "passed",
+        "output": "{\"root\": \"/Users/ych/ryf/code/llm-pitfall-lab/.venv/lib/python3.12/site-packages/mlx\", \"version\": \"0.32.4\", \"python\": \"3.12.13\"}"
+      },
+      {
+        "name": "dependencies.lock",
+        "status": "passed",
+        "output": "Resolved 37 packages in 14ms"
+      },
+      {
+        "name": "checks.failure_cases",
+        "status": "passed",
+        "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.009s\n\nOK"
+      },
+      {
+        "name": "cli.contract",
+        "status": "passed",
+        "output": "PASS: native help/version/error contracts"
+      },
+      {
+        "name": "gpu.smoke",
+        "status": "passed",
+        "output": "status: ok\ndevice: GPU\ndevice_name: Apple M4\nmlx_version: 0.32.4\ncpp_standard: 202302\nforward_max_error: 0\ngradient_max_error: 0\npeak_bytes: 212"
+      }
+    ]
+  },
+  "binary_sha256": {
+    "runs/d0/module-layout/pitfall-lab": "fbaf7424fc6ffbe760af4501715d1638b9f80236e499b25f50dd9bc213cb6393",
+    "runs/d0/module-layout/lab_gpu_smoke": "972ce9d91ee51dbf4082de2ea5176940631163837c0cff93b7320c8a37d557b8"
+  },
+  "input_and_tolerance": {
+    "input": "x=[[1,2,3],[4,5,6]], w=[[1,2],[3,4],[5,6]]",
+    "forward_reference": [
+      [
+        22,
+        28
+      ],
+      [
+        49,
+        64
+      ]
+    ],
+    "loss": "mean(square(x @ w))",
+    "gradient_reference": [
+      [
+        109,
+        142
+      ],
+      [
+        144.5,
+        188
+      ],
+      [
+        180,
+        234
+      ]
+    ],
+    "max_absolute_error": 1e-05
+  },
+  "limitations": [
+    "No model weights downloaded or full-model execution",
+    "No D2 resource protector or D3 resumable training",
+    "Static boundary checks do not prove arbitrary runtime path safety",
+    "MLX peak is not process RSS or full-model memory"
+  ],
+  "review": {
+    "status_document": "docs/status.md",
+    "method": "Manual identity, coverage and sufficiency review; project.docs checks navigation only",
+    "hash_scope": "All files under cmake, src, tests, configs except __pycache__, plus root CMakeLists.txt, pyproject.toml, uv.lock and .python-version. Docs and evidence excluded to avoid self-reference.",
+    "result": "Source manifest and hashes match current tree; seven passing tests support only the D0 claims listed in docs/status.md. Learning Markdown links checked manually by script; no automatic semantic review exists.",
+    "documentation_scope": [
+      "README.md",
+      "AGENTS.md",
+      "docs/*.md"
+    ]
+  },
+  "raw_report": "runs/d0/module-layout/ctest-current.xml",
+  "documentation_validation": {
+    "verified_at": "2026-10-23T17:18:12+08:00",
+    "status": "passed",
+    "scope": [
+      "Formal Markdown links, anchors and index",
+      "Learning Markdown local links and anchors"
+    ],
+    "source_identity_check": "Current source manifest and hashes unchanged; prior build and numerical results retained with original verification time.",
+    "change": "Pre-commit checks: current documentation navigation, learning links, source/binary identity and all seven CTest checks passed.",
+    "commands": [
+      ".venv/bin/python tests/checks/check_project.py docs --root ."
+    ],
+    "supplement": "Learning links checked with existing Markdown parsing helpers in an ad hoc script; not registered as a CTest check."
+  }
+}
