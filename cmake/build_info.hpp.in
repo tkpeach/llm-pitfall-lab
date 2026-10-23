@@ -1,0 +1,8 @@
+#pragma once
+#include <string_view>
+static_assert(__cplusplus >= 202302L, "Formal sources require C++23");
+namespace lab::build {
+inline constexpr std::string_view version = "@PROJECT_VERSION@";
+inline constexpr std::string_view mlx_version = "@LAB_MLX_VERSION@";
+inline constexpr std::string_view metallib = "@LAB_MLX_METALLIB@";
+}
