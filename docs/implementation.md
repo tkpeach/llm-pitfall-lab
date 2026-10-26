@@ -47,6 +47,8 @@
 
 `src/` 与 `tests/` 用于正式 C++ 实现及其测试。辅助脚本按功能放置，不能以 Python CLI 或旧参考实现替代 C++ 主路径。
 
+任务模块使用固定版本的 [nlohmann/json](../third_party/nlohmann/README.md)，头文件和许可证随仓库保存；解析库是模块私有依赖，正式校验和计分由 C++ 实现，不调用 Python 评分。
+
 ## 配置与任务数据
 
 `configs/resources.toml` 是机器可读的项目资源规则，与 [资源使用规则](resource-policy.md) 保持一致：

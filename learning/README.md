@@ -9,6 +9,7 @@
 | [C++23 与错误返回](topics/cpp23-and-errors.md) | `std::expected` 是什么？为什么选择 C++23？需要逐项检查标准库吗？ |
 | [构建、测试与模块组织](topics/build-and-testing.md) | CMake、CTest、GoogleTest 分别做什么？测试名称的正则是什么意思？源文件和模块如何组织？何时采用 TDD？ |
 | [MLX、Metal 与模型执行](topics/mlx-and-model-execution.md) | MLX 是 Python 实现的吗？C++ 如何调用？Metal 做什么？MLX-LM 应该直接使用还是参考实现？辅助环境与锁文件有什么用？ |
+| [Gold 与 LLM 评估](topics/evaluation-and-gold.md) | 严格匹配能衡量什么？业界如何比较字段、诊断错误和设计独立评估？ |
 
 这些内容已在讨论中解释，不据此推断你已经掌握或亲手实践；笔记末尾的问题可用于自查，有疑问时继续补充解释。
 

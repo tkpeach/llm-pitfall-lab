@@ -1,0 +1,314 @@
+[
+  {
+    "id": "dev-cny-complete-1",
+    "input": "订单号 CN-001；商品：牛皮纸信封；数量十二个；单价人民币 2.35 元；送达日期 2027 年 1 月 8 日。",
+    "gold": {
+      "order_id": "CN-001",
+      "product": "牛皮纸信封",
+      "quantity": 12,
+      "unit_price_minor": 235,
+      "currency": "CNY",
+      "delivery_date": "2027-01-08"
+    }
+  },
+  {
+    "id": "dev-cny-complete-2",
+    "input": "请在 2027-01-08 送来 12 个牛皮纸信封。订单号为 CN-001，每个单价 2.35 元，币种明确为人民币。",
+    "gold": {
+      "order_id": "CN-001",
+      "product": "牛皮纸信封",
+      "quantity": 12,
+      "unit_price_minor": 235,
+      "currency": "CNY",
+      "delivery_date": "2027-01-08"
+    }
+  },
+  {
+    "id": "dev-usd-complete-1",
+    "input": "订单号 US-014，商品不锈钢量勺，买四个，明确单价 8.75 美元，2027-02-10 送到。",
+    "gold": {
+      "order_id": "US-014",
+      "product": "不锈钢量勺",
+      "quantity": 4,
+      "unit_price_minor": 875,
+      "currency": "USD",
+      "delivery_date": "2027-02-10"
+    }
+  },
+  {
+    "id": "dev-usd-complete-2",
+    "input": "2027 年 2 月 10 日需收到不锈钢量勺 4 个；单价 USD 8.75，订单号 US-014。",
+    "gold": {
+      "order_id": "US-014",
+      "product": "不锈钢量勺",
+      "quantity": 4,
+      "unit_price_minor": 875,
+      "currency": "USD",
+      "delivery_date": "2027-02-10"
+    }
+  },
+  {
+    "id": "dev-missing-fields-1",
+    "input": "只确定商品透明收纳盒，需要六个。订单号、单价、币种和送达日期均未提供。",
+    "gold": {
+      "order_id": null,
+      "product": "透明收纳盒",
+      "quantity": 6,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-missing-fields-2",
+    "input": "采购透明收纳盒 6 个，其他订单信息暂缺，尚无价格或日期。",
+    "gold": {
+      "order_id": null,
+      "product": "透明收纳盒",
+      "quantity": 6,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-total-only-1",
+    "input": "订单号 TOTAL-13，瓦楞纸箱五个，总价人民币 100 元。没有说明单价，送达时间未定。",
+    "gold": {
+      "order_id": "TOTAL-13",
+      "product": "瓦楞纸箱",
+      "quantity": 5,
+      "unit_price_minor": null,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-total-only-2",
+    "input": "5 个瓦楞纸箱的订单号为 TOTAL-13；费用合计 100 元人民币，不给出单个价格，也没有交付日期。",
+    "gold": {
+      "order_id": "TOTAL-13",
+      "product": "瓦楞纸箱",
+      "quantity": 5,
+      "unit_price_minor": null,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-ambiguous-currency-1",
+    "input": "订单号 DOLLAR-3，折叠雨伞两把，报价栏只有 $ 符号，没有单价数字，也未说明是哪种货币，送达日期未定。",
+    "gold": {
+      "order_id": "DOLLAR-3",
+      "product": "折叠雨伞",
+      "quantity": 2,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-ambiguous-currency-2",
+    "input": "订 2 把折叠雨伞，订单号 DOLLAR-3；价格栏只标了一个 $，尚未提供单价数字，没有币种名称或交付日期。",
+    "gold": {
+      "order_id": "DOLLAR-3",
+      "product": "折叠雨伞",
+      "quantity": 2,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-relative-date-1",
+    "input": "订单号 REL-04，棉质围裙十件，单价人民币 32 元，要求明天送来，没有提供绝对日期。",
+    "gold": {
+      "order_id": "REL-04",
+      "product": "棉质围裙",
+      "quantity": 10,
+      "unit_price_minor": 3200,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-relative-date-2",
+    "input": "棉质围裙要 10 件，每件 CNY 32.00。订单号 REL-04，送达时间写的是明天，未给出年月日。",
+    "gold": {
+      "order_id": "REL-04",
+      "product": "棉质围裙",
+      "quantity": 10,
+      "unit_price_minor": 3200,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-quantity-correction-1",
+    "input": "订单号 FIX-Q-2，商品圆头画笔。数量原为十二支，现明确改为十五支，以更正后为准；单价人民币 1.60 元，送达日期未定。",
+    "gold": {
+      "order_id": "FIX-Q-2",
+      "product": "圆头画笔",
+      "quantity": 15,
+      "unit_price_minor": 160,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-quantity-correction-2",
+    "input": "更正订单号 FIX-Q-2：圆头画笔不再要12支，最终要15支。单价为 CNY 1.60，没有交付日期。",
+    "gold": {
+      "order_id": "FIX-Q-2",
+      "product": "圆头画笔",
+      "quantity": 15,
+      "unit_price_minor": 160,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-price-correction-1",
+    "input": "订单号 FIX-P-5，尼龙扎带二十根。单价原写人民币 0.90 元，现明确改成人民币 0.85 元，旧价作废；日期未定。",
+    "gold": {
+      "order_id": "FIX-P-5",
+      "product": "尼龙扎带",
+      "quantity": 20,
+      "unit_price_minor": 85,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-price-correction-2",
+    "input": "尼龙扎带20根，订单号 FIX-P-5。最终每根 CNY 0.85，不采用先前的0.90；送达日期未说明。",
+    "gold": {
+      "order_id": "FIX-P-5",
+      "product": "尼龙扎带",
+      "quantity": 20,
+      "unit_price_minor": 85,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-identity-and-model-1",
+    "input": "商品名称是“A5横线本”，订单号为 0007-A，不要丢掉前导零。数量二十一册，单价人民币 4.20 元，2027-05-12 送达。",
+    "gold": {
+      "order_id": "0007-A",
+      "product": "A5横线本",
+      "quantity": 21,
+      "unit_price_minor": 420,
+      "currency": "CNY",
+      "delivery_date": "2027-05-12"
+    }
+  },
+  {
+    "id": "dev-identity-and-model-2",
+    "input": "请于2027年5月12日交付21册A5横线本；每册CNY 4.20；订单号0007-A。A5是名称的一部分。",
+    "gold": {
+      "order_id": "0007-A",
+      "product": "A5横线本",
+      "quantity": 21,
+      "unit_price_minor": 420,
+      "currency": "CNY",
+      "delivery_date": "2027-05-12"
+    }
+  },
+  {
+    "id": "dev-large-chinese-count-1",
+    "input": "订单号 COUNT-101，泡沫护角一百零一个，明确单价人民币 1.05 元，送达日期未知。",
+    "gold": {
+      "order_id": "COUNT-101",
+      "product": "泡沫护角",
+      "quantity": 101,
+      "unit_price_minor": 105,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-large-chinese-count-2",
+    "input": "泡沫护角101个，订单号COUNT-101，每个CNY 1.05，无交付日期。",
+    "gold": {
+      "order_id": "COUNT-101",
+      "product": "泡沫护角",
+      "quantity": 101,
+      "unit_price_minor": 105,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-zero-and-empty-1",
+    "input": "订单号 FREE-06，试用标签二十四张。单价明确为人民币 0 元，免费提供，日期尚未确定。",
+    "gold": {
+      "order_id": "FREE-06",
+      "product": "试用标签",
+      "quantity": 24,
+      "unit_price_minor": 0,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-zero-and-empty-2",
+    "input": "试用标签24张，订单号FREE-06，每张价格CNY 0.00，送达日期未提供。",
+    "gold": {
+      "order_id": "FREE-06",
+      "product": "试用标签",
+      "quantity": 24,
+      "unit_price_minor": 0,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-calendar-and-distractors-1",
+    "input": "订单号LEAP-28，桌面日历十三本，单价人民币29元。2028年2月27日下单，要求2028年2月29日送达；下单日不是交付日。",
+    "gold": {
+      "order_id": "LEAP-28",
+      "product": "桌面日历",
+      "quantity": 13,
+      "unit_price_minor": 2900,
+      "currency": "CNY",
+      "delivery_date": "2028-02-29"
+    }
+  },
+  {
+    "id": "dev-calendar-and-distractors-2",
+    "input": "请送13本桌面日历，每本CNY 29.00，订单号LEAP-28。交付日期2028-02-29，创建订单日期2028-02-27。",
+    "gold": {
+      "order_id": "LEAP-28",
+      "product": "桌面日历",
+      "quantity": 13,
+      "unit_price_minor": 2900,
+      "currency": "CNY",
+      "delivery_date": "2028-02-29"
+    }
+  },
+  {
+    "id": "dev-no-order-data-1",
+    "input": "客户说今天开会，尚未提供订单号、商品、数量、价格、币种和交付日期。",
+    "gold": {
+      "order_id": null,
+      "product": null,
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "dev-no-order-data-2",
+    "input": "先别录入订单，商品和数量还没确定，订单编号、金额及送达安排也都没有。",
+    "gold": {
+      "order_id": null,
+      "product": null,
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  }
+]

@@ -1,0 +1,33 @@
+{
+  "dataset_id": "order-extraction-eval-seed-v1",
+  "task_version": "chinese-order-v1",
+  "status": "draft_for_independent_review",
+  "created_on": "2026-10-26",
+  "source": {
+    "kind": "project_authored_synthetic",
+    "authorship": "assistant_authored_and_rule_reviewed",
+    "external_dataset": null,
+    "usage": "For this project, matching existing synthetic fixture use; no third-party dataset or private business records used.",
+    "independent_human_review": "pending"
+  },
+  "split_policy": "Group-disjoint dev and test candidates; no training split. Test is not yet frozen. Do not use test candidates for prompt or training selection.",
+  "files": {
+    "annotations.json": "41ba1412e828ab90af64de602db13907cd3ac39bf283a9beede9c69003d5935e",
+    "dev.json": "b0aa4409e5a1cf09cd4effae2aa2ffb3a6873274578b1a63dfad3cdd99bcd5ae",
+    "test.json": "76e4bbfc178a9627af9a1254f43733dac0bef6981521964db036c174737f83d1"
+  },
+  "counts": {
+    "dev": {
+      "samples": 26,
+      "groups": 13,
+      "nonnull_fields": 116,
+      "null_fields": 40
+    },
+    "test": {
+      "samples": 26,
+      "groups": 13,
+      "nonnull_fields": 116,
+      "null_fields": 40
+    }
+  }
+}

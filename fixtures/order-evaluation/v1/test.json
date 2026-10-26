@@ -1,0 +1,314 @@
+[
+  {
+    "id": "test-cny-complete-1",
+    "input": "这笔采购的商品名称为硅胶杯垫，订购八个，每个人民币 10.90 元。订单号 T-CN-91，指定 2027 年 3 月 19 日交付。",
+    "gold": {
+      "order_id": "T-CN-91",
+      "product": "硅胶杯垫",
+      "quantity": 8,
+      "unit_price_minor": 1090,
+      "currency": "CNY",
+      "delivery_date": "2027-03-19"
+    }
+  },
+  {
+    "id": "test-cny-complete-2",
+    "input": "交付：2027-03-19；单价：10.90；币种：CNY；订单号：T-CN-91；数量：8；商品：硅胶杯垫。",
+    "gold": {
+      "order_id": "T-CN-91",
+      "product": "硅胶杯垫",
+      "quantity": 8,
+      "unit_price_minor": 1090,
+      "currency": "CNY",
+      "delivery_date": "2027-03-19"
+    }
+  },
+  {
+    "id": "test-usd-complete-1",
+    "input": "采购单的订单号是 EXPORT-72。帆布工具袋九个，单价为十二美元四十分，即 12.40 美元；约定于 2027 年 7 月 6 日送达。",
+    "gold": {
+      "order_id": "EXPORT-72",
+      "product": "帆布工具袋",
+      "quantity": 9,
+      "unit_price_minor": 1240,
+      "currency": "USD",
+      "delivery_date": "2027-07-06"
+    }
+  },
+  {
+    "id": "test-usd-complete-2",
+    "input": "订购商品：帆布工具袋；每个 12.40 USD，数量 9。收货日期为 2027-07-06，订单号保持 EXPORT-72。",
+    "gold": {
+      "order_id": "EXPORT-72",
+      "product": "帆布工具袋",
+      "quantity": 9,
+      "unit_price_minor": 1240,
+      "currency": "USD",
+      "delivery_date": "2027-07-06"
+    }
+  },
+  {
+    "id": "test-missing-fields-1",
+    "input": "订单号 ONLY-ID-8，商品名称为磁性书签。数量待定，价格、币种以及交付日期没有约定。",
+    "gold": {
+      "order_id": "ONLY-ID-8",
+      "product": "磁性书签",
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-missing-fields-2",
+    "input": "目前的记录仅有两项：商品磁性书签，订单号 ONLY-ID-8。还未确认数量，也没有任何金额和送达安排。",
+    "gold": {
+      "order_id": "ONLY-ID-8",
+      "product": "磁性书签",
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-total-only-1",
+    "input": "毛毡桌垫订购三张，订单号 SUM-USD-6，整单共付 45 美元，未列单价和送达日期。",
+    "gold": {
+      "order_id": "SUM-USD-6",
+      "product": "毛毡桌垫",
+      "quantity": 3,
+      "unit_price_minor": null,
+      "currency": "USD",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-total-only-2",
+    "input": "请记录订单号 SUM-USD-6：3 张毛毡桌垫，USD 总额 45，单张金额未知，交付日未知。",
+    "gold": {
+      "order_id": "SUM-USD-6",
+      "product": "毛毡桌垫",
+      "quantity": 3,
+      "unit_price_minor": null,
+      "currency": "USD",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-ambiguous-currency-1",
+    "input": "订单号 PRICE-UNSPEC-7：软木留言板七块，收货地上海，但单价和币种都没有提供，交付日期未知。",
+    "gold": {
+      "order_id": "PRICE-UNSPEC-7",
+      "product": "软木留言板",
+      "quantity": 7,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-ambiguous-currency-2",
+    "input": "要 7 块软木留言板。订单号 PRICE-UNSPEC-7，收货地址在上海；单价、币种和送达日期没有信息。",
+    "gold": {
+      "order_id": "PRICE-UNSPEC-7",
+      "product": "软木留言板",
+      "quantity": 7,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-relative-date-1",
+    "input": "旅行洗漱包十一只，订单号 NEXT-WEEK-9，单价 5.40 美元，下周五送达；未注明具体年月日。",
+    "gold": {
+      "order_id": "NEXT-WEEK-9",
+      "product": "旅行洗漱包",
+      "quantity": 11,
+      "unit_price_minor": 540,
+      "currency": "USD",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-relative-date-2",
+    "input": "订单号 NEXT-WEEK-9 / 商品旅行洗漱包 / 数量11 / 每只USD 5.40 / 交付下周五，没有绝对日期。",
+    "gold": {
+      "order_id": "NEXT-WEEK-9",
+      "product": "旅行洗漱包",
+      "quantity": 11,
+      "unit_price_minor": 540,
+      "currency": "USD",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-quantity-correction-1",
+    "input": "订单号 REV-Q-8 的商品为便携药盒，先报十个，已明确更正为十八个。单价 4.25 美元；尚未约定收货日期。",
+    "gold": {
+      "order_id": "REV-Q-8",
+      "product": "便携药盒",
+      "quantity": 18,
+      "unit_price_minor": 425,
+      "currency": "USD",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-quantity-correction-2",
+    "input": "最终确认便携药盒18个，原先10个的数量作废；订单号 REV-Q-8，单个价格 USD 4.25，交付日期未知。",
+    "gold": {
+      "order_id": "REV-Q-8",
+      "product": "便携药盒",
+      "quantity": 18,
+      "unit_price_minor": 425,
+      "currency": "USD",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-price-correction-1",
+    "input": "订单号 REV-P-3：铝合金挂钩十四个，单价从 7.50 美元明确下调并改为 7.30 美元，以 7.30 为准。交付日期待定。",
+    "gold": {
+      "order_id": "REV-P-3",
+      "product": "铝合金挂钩",
+      "quantity": 14,
+      "unit_price_minor": 730,
+      "currency": "USD",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-price-correction-2",
+    "input": "铝合金挂钩要14个。订单号 REV-P-3，每个最终价格 USD 7.30，之前的 USD 7.50 已作废，日期没有提供。",
+    "gold": {
+      "order_id": "REV-P-3",
+      "product": "铝合金挂钩",
+      "quantity": 14,
+      "unit_price_minor": 730,
+      "currency": "USD",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-identity-and-model-1",
+    "input": "订单号为000042-z，商品是Type-C短线，长度20厘米，订购十六条，单价人民币11.90元，2027年9月3日送达。",
+    "gold": {
+      "order_id": "000042-z",
+      "product": "Type-C短线",
+      "quantity": 16,
+      "unit_price_minor": 1190,
+      "currency": "CNY",
+      "delivery_date": "2027-09-03"
+    }
+  },
+  {
+    "id": "test-identity-and-model-2",
+    "input": "2027-09-03送达的采购：订单号000042-z，Type-C短线16条，每条CNY 11.90，规格长度20厘米。",
+    "gold": {
+      "order_id": "000042-z",
+      "product": "Type-C短线",
+      "quantity": 16,
+      "unit_price_minor": 1190,
+      "currency": "CNY",
+      "delivery_date": "2027-09-03"
+    }
+  },
+  {
+    "id": "test-large-chinese-count-1",
+    "input": "订单号 COUNT-120，商品防尘塞，数量一百二十个，单价人民币 2.30 元，暂未确定日期。",
+    "gold": {
+      "order_id": "COUNT-120",
+      "product": "防尘塞",
+      "quantity": 120,
+      "unit_price_minor": 230,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-large-chinese-count-2",
+    "input": "需要120个防尘塞；订单号COUNT-120；单个价格CNY 2.30；交付日没有信息。",
+    "gold": {
+      "order_id": "COUNT-120",
+      "product": "防尘塞",
+      "quantity": 120,
+      "unit_price_minor": 230,
+      "currency": "CNY",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-zero-and-empty-1",
+    "input": "订单号 ZERO-11，商品样品贴纸，三十张，每张单价 0 美元，不收费。没有约定交付日。",
+    "gold": {
+      "order_id": "ZERO-11",
+      "product": "样品贴纸",
+      "quantity": 30,
+      "unit_price_minor": 0,
+      "currency": "USD",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-zero-and-empty-2",
+    "input": "此次样品贴纸要30张，订单号ZERO-11。明确标价USD 0.00/张，免费，送达日期未知。",
+    "gold": {
+      "order_id": "ZERO-11",
+      "product": "样品贴纸",
+      "quantity": 30,
+      "unit_price_minor": 0,
+      "currency": "USD",
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-calendar-and-distractors-1",
+    "input": "订单号 DATE-APR-30，商品金属文件架，数量十七个，单价人民币38.50元。下单于2027年4月28日，明确送达日期2027年4月30日。",
+    "gold": {
+      "order_id": "DATE-APR-30",
+      "product": "金属文件架",
+      "quantity": 17,
+      "unit_price_minor": 3850,
+      "currency": "CNY",
+      "delivery_date": "2027-04-30"
+    }
+  },
+  {
+    "id": "test-calendar-and-distractors-2",
+    "input": "金属文件架17个，每个CNY 38.50；订单号DATE-APR-30。2027-04-28是下单日，2027-04-30才是送达日。",
+    "gold": {
+      "order_id": "DATE-APR-30",
+      "product": "金属文件架",
+      "quantity": 17,
+      "unit_price_minor": 3850,
+      "currency": "CNY",
+      "delivery_date": "2027-04-30"
+    }
+  },
+  {
+    "id": "test-no-order-data-1",
+    "input": "这条消息仅提醒下午3点开会，没有下单，也没有提供商品、数量、金额、币种或订单号、交付日期。",
+    "gold": {
+      "order_id": null,
+      "product": null,
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  },
+  {
+    "id": "test-no-order-data-2",
+    "input": "请阅读第2页的说明，暂不创建采购订单。订单资料尚未提供，提到的页码不是购买数量。",
+    "gold": {
+      "order_id": null,
+      "product": null,
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    }
+  }
+]

@@ -1,6 +1,6 @@
 # 构建与检查
 
-本页定义正式 C++ 工程的操作入口。适用于当前 Apple Silicon macOS 和固定工具环境，不是完整模型推理或训练指南。
+本页定义正式 C++ 工程的构建、检查与离线评估入口。适用于当前 Apple Silicon macOS 和固定工具环境，不是完整模型推理或训练指南。
 
 ## 准备环境
 
@@ -37,6 +37,7 @@ cmake --build runs/d0/build -j 2
 | `cmake/mlx/MLXSDK.cmake`、`cmake/mlx/locate_sdk.py` | MLX 构建集成及固定工具环境的 SDK 定位、校验 |
 | `src/CMakeLists.txt` | 正式模块入口和 CLI 目标 |
 | `src/compute/CMakeLists.txt` | 计算模块目标、头文件路径及 MLX 链接依赖 |
+| `src/task/CMakeLists.txt` | 严格任务评估模块与私有 JSON 依赖 |
 | `tests/CMakeLists.txt` | 测试可执行文件和 CTest 注册 |
 | `tests/checks/` | 文档、构建边界检查器及检查器自身的错误用例测试 |
 
@@ -51,9 +52,21 @@ GPU 运行时及其集成测试绑定配置时的 SDK 动态库和 `mlx.metallib
 ./runs/d0/build/pitfall-lab --version
 ```
 
-正式 CLI 当前仅提供帮助和构建版本信息，`--version` 中的 MLX SDK 版本是构建时身份，不表示执行了 GPU 初始化。GPU 初始化接口位于 `src/compute/`，在需要计算的工作进程启动时调用，不执行测试样例。
+`--version` 中的 MLX SDK 版本是构建时身份，不表示执行了 GPU 初始化。GPU 初始化由计算模块负责，固定数值样例属于独立集成测试。
 
-CLI 退出码：`0` 成功，`2` 用法错误；无参数、未知命令或多余参数均拒绝。帮助和版本命令不初始化 GPU。
+CLI 还提供下述离线评估。退出码：`0` 操作完成（评估得分可以为 0），`1` 评估输入或读写错误，`2` 用法错误。无参数、未知命令或多余参数均拒绝。帮助、版本与评估命令不初始化 GPU。
+
+## 离线任务评估
+
+先准备符合 [任务契约](task-spec.md#离线评估输入与报告) 的预测文件，再执行：
+
+```sh
+./runs/d0/build/pitfall-lab evaluate \
+  --gold fixtures/task_contract.json \
+  --predictions predictions.json
+```
+
+`predictions.json` 是用户准备的输入路径，不是仓库已有文件。命令只读取输入并将报告输出到标准输出，不提取或修复答案。契约、输入边界、错误区分和指标解释统一见任务规范。正式任务模块使用仓库内固定版本的 [JSON 依赖](../third_party/nlohmann/README.md)，无需额外安装或构建时下载。
 
 ## 统一检查
 
@@ -70,6 +83,10 @@ ctest --test-dir runs/d0/build --output-on-failure --no-tests=error
 | `checks.failure_cases` | 用受控错误验证导航、编译标准、SDK 与研究目录依赖检查能拒绝问题 |
 | `cli.contract` | 从无关工作目录验证原生帮助、版本及错误用法 |
 | `gpu.smoke` | CTest 直接从独立工作目录运行 C++ 集成测试，调用正式初始化后验证 GPU 前向/反向 |
+| `task.contract` | 原生严格解析、字段类型、日期、非法输出与部分计分检查 |
+| `task.evaluate` | 调用原生 CLI 验证六条契约样例、ID 匹配、空值分组、阶段指标、缺失/非法输出分母及输入错误 |
+| `task.dataset` | 检查候选评估种子的身份、分组隔离、标注证据/归一化及原生 gold 合法性；不替代独立人工语义复核 |
+| `checks.dataset_failure_cases` | 用破坏哈希、证据、标注、分组和缺失理由的临时副本验证检查器拒绝错误 |
 
 `tests/integration/gpu_smoke.cpp` 保存固定输入、解析结果、容差断言和测试报告；这些不属于正式计算接口。测试检查小矩阵乘法与 loss 对权重的梯度，最大绝对误差不得超过 `1e-5`，失败退出码为 `1`。GPU 不可用时明确失败，不执行 CPU 替代路径。需要单独诊断时可直接运行：
 

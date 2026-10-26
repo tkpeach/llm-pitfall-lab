@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "verified_at": "2026-10-23T17:18:12+08:00",
-  "scope": "D0 current native build and tiny GPU forward/backward; no full-model or training acceptance",
-  "git_base_commit": "2a08f4866bc0d4063a123afaa87efe5b6e7c0ea1",
+  "verified_at": "2026-10-26T14:39:08+08:00",
+  "scope": "D0/D1 implementation regression and synthetic evaluation-seed consistency checks; no human label approval or model-quality acceptance",
+  "git_base_commit": "eae99d426cff3cf2478726a3908305560770a662",
   "git_worktree_dirty": true,
   "environment": {
     "platform": "macOS-15.7.3-arm64-arm-64bit",
@@ -26,30 +26,66 @@
     "cmake/mlx/MLXSDK.cmake": "662cbc2c9b5909d8e8a66767645983c55c90fb31287237d74295b513e99e8d8c",
     "cmake/mlx/locate_sdk.py": "2a671e4d59d2df2e05487129ac1ac77b0ce13d244d639e2cf2e7b89f4e1824cd",
     "configs/resources.toml": "ec4ddfea702559d1f3ed4e42a1fb2ed4dd9eb7e99691a8f2228c0ec327e16ba5",
+    "fixtures/order-evaluation/v1/README.md": "f31e88230c625e9cf3da1da3e8ce30fb4e592c05e54cbab5c987eac8618a0df7",
+    "fixtures/order-evaluation/v1/annotations.json": "41ba1412e828ab90af64de602db13907cd3ac39bf283a9beede9c69003d5935e",
+    "fixtures/order-evaluation/v1/dev.json": "b0aa4409e5a1cf09cd4effae2aa2ffb3a6873274578b1a63dfad3cdd99bcd5ae",
+    "fixtures/order-evaluation/v1/manifest.json": "97f8fb6407b23caf8930a10fecf73f5f91ae0a1c10cbd90d12b32046f59a0b1a",
+    "fixtures/order-evaluation/v1/test.json": "76e4bbfc178a9627af9a1254f43733dac0bef6981521964db036c174737f83d1",
+    "fixtures/task_contract.json": "80b40e80ce1fcd7e4f0634735ff9fbc6bfdda33eedfb9611fcd02e9b078ea815",
     "pyproject.toml": "5bb78378d5056497f654844abe0507c2591020fbbc3075f1c14cde3acabf9ba3",
-    "src/CMakeLists.txt": "c045d9aff06f698e5b76eedf1cdf3fcdd5ca72de0fdddcbd1f1fa4468ab93d34",
+    "src/CMakeLists.txt": "b74674545c7310c56a75e7b2352e35efad714bdfacbabecbbd46fc13616d2ad3",
     "src/compute/CMakeLists.txt": "06c96f891d8a9c337b254b672141a8562c5f942e3561757770ced4e2371c0edc",
     "src/compute/mlx_runtime.cpp": "200d781af93d2854b5f421cb089fa9eae40ba9a740ec95d8826de9d67dc7fc27",
     "src/compute/mlx_runtime.hpp": "73783477df26ca277f95f9d1058cdbb377ea566acc7af9e70d4f951ae6e228a0",
-    "src/main.cpp": "af5f25441b105166598c64b53146b3060247bd7bd2197602539bdd45ff2159ae",
-    "tests/CMakeLists.txt": "49725b394fa203622c615b312bec7f68f48d1de3b36beb1f319e33264de79999",
+    "src/main.cpp": "870694226b3c7ef91e403f60cda60d6fa258d6217a315186fdc63ddabac802cf",
+    "src/task/CMakeLists.txt": "7d6d027591227370e8b06c2c62c265918697bac54c97ed957c8ed3e8f473b895",
+    "src/task/evaluator.cpp": "ad75f4c2597df12cc7f1b8fad809790b1667526f43462ed09b54e3608f74b234",
+    "src/task/evaluator.hpp": "be1148bc088695e88485f9e1a6700e230892102b94717c4d43ce95f85d81908e",
+    "tests/CMakeLists.txt": "4070d7439f68b85eb0e6f6314f1680a7b89c1f9194c13a40161e130abede4f47",
+    "tests/checks/check_dataset.py": "a71b252a22dec150e599392f3a073e8b748ce2e1d59b7a604d7f03b086586f82",
     "tests/checks/check_project.py": "b45c6fa0953bdbcc4672b01fe838cc4e16b333a6f64fac8e236e2c71f128ed87",
     "tests/checks/test_checks.py": "c1d58945454d595703df4f59784590a6a5d98a6f0d0b406be18e4c2c7a99548f",
+    "tests/checks/test_dataset.py": "05e94948b0e8fb2f49e67633868e8eb13901e2658dbda2aaab9887f96e0d3c0b",
     "tests/integration/gpu_smoke.cpp": "030d7827a72403dde0f594899dbaca87a3fa87fafad0fc04e60c969af91df74a",
+    "tests/task/contract.cpp": "bf934a71197fe27eadb4bafd3b8893fe7d5c57159f5963a18ab8bbb3097aa189",
     "tests/test_cli.py": "5120c2a10b82bb153a1dc3d06fe9c3256217e32e941cea82b3c1b23ee630b67b",
+    "tests/test_evaluate.py": "bf63b98eca8b52d7cdaf44df5c8701dd173c85c0077977a2da871d70e2f50344",
+    "third_party/nlohmann/LICENSE.MIT": "46a65cffd1ea955132d95a8dd921640714a8d6b537d2e4e482d31145ae95b603",
+    "third_party/nlohmann/README.md": "68d22719527e757f8e62033248c01241343da8825aa9cb244568d3bf2fe80558",
+    "third_party/nlohmann/include/nlohmann/json.hpp": "aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63",
     "uv.lock": "36373ca8377d9cc6f5c66569a5f106e432b5647b59cf42d491157d126e56a60f"
   },
-  "build_directory": "runs/d0/module-layout",
+  "build_directory": "runs/d1/build",
   "commands": [
-    "cmake -S . -B runs/d0/module-layout -DCMAKE_BUILD_TYPE=Release -DPython3_EXECUTABLE=\"$PWD/.venv/bin/python\" -DLAB_MLX_ROOT=\"$(.venv/bin/python cmake/mlx/locate_sdk.py)\"",
-    "cmake --build runs/d0/module-layout -j 2",
-    "ctest --test-dir runs/d0/module-layout --output-on-failure --no-tests=error --output-junit \"$PWD/runs/d0/module-layout/ctest-current.xml\""
+    "cmake -S . -B runs/d1/build -DCMAKE_BUILD_TYPE=Release -DPython3_EXECUTABLE=\"$PWD/.venv/bin/python\" -DLAB_MLX_ROOT=\"$(.venv/bin/python cmake/mlx/locate_sdk.py)\"",
+    "cmake --build runs/d1/build -j 2",
+    "ctest --test-dir runs/d1/build --output-on-failure --no-tests=error --output-junit \"$PWD/runs/d1/build/ctest-current.xml\""
   ],
   "ctest": {
-    "total": 7,
-    "passed": 7,
+    "total": 11,
+    "passed": 11,
     "skipped": 0,
     "tests": [
+      {
+        "name": "task.contract",
+        "status": "passed",
+        "output": "PASS: 62 strict parsing, type, Gregorian date and scoring assertions"
+      },
+      {
+        "name": "task.evaluate",
+        "status": "passed",
+        "output": "PASS: six fixture golds, ID matching, null baseline, invalid/missing denominators and input refusal"
+      },
+      {
+        "name": "task.dataset",
+        "status": "passed",
+        "output": "{\"checks\": {\"dev\": {\"samples\": 26, \"groups\": 13, \"nonnull_fields\": 116, \"null_fields\": 40, \"rule_tag_counts\": {\"中文数量\": 2, \"人民币\": 2, \"完整订单\": 4, \"币种不猜测\": 2, \"总价非单价\": 2, \"数字干扰\": 4, \"无订单信息\": 2, \"明确更正单价\": 2, \"明确更正数量\": 2, \"相对日期不推断\": 2, \"绝对日期\": 2, \"编号保留\": 2, \"缺失字段\": 6, \"美元\": 2, \"金额归一化\": 2, \"闰日\": 2, \"零单价\": 2}}, \"test\": {\"samples\": 26, \"groups\": 13, \"nonnull_fields\": 116, \"null_fields\": 40, \"rule_tag_counts\": {\"中文数量\": 2, \"人民币\": 2, \"完整订单\": 4, \"币种不猜测\": 2, \"总价非单价\": 2, \"数字干扰\": 6, \"无订单信息\": 2, \"明确更正单价\": 2, \"明确更正数量\": 2, \"相对日期不推断\": 2, \"绝对日期\": 2, \"编号保留\": 2, \"缺失字段\": 6, \"美元\": 2, \"金额归一化\": 2, \"零单价\": 2}}}, \"native_gold_self_check\": {\"dev\": {\"self_check_samples\": 26, \"all_gold_valid\": true}, \"test\": {\"self_check_samples\": 26, \"all_gold_valid\": true}}...\n[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]"
+      },
+      {
+        "name": "checks.dataset_failure_cases",
+        "status": "passed",
+        "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.024s\n\nOK"
+      },
       {
         "name": "project.docs",
         "status": "passed",
@@ -68,12 +104,12 @@
       {
         "name": "dependencies.lock",
         "status": "passed",
-        "output": "Resolved 37 packages in 14ms"
+        "output": "Resolved 37 packages in 83ms"
       },
       {
         "name": "checks.failure_cases",
         "status": "passed",
-        "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.009s\n\nOK"
+        "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.051s\n\nOK"
       },
       {
         "name": "cli.contract",
@@ -88,8 +124,9 @@
     ]
   },
   "binary_sha256": {
-    "runs/d0/module-layout/pitfall-lab": "fbaf7424fc6ffbe760af4501715d1638b9f80236e499b25f50dd9bc213cb6393",
-    "runs/d0/module-layout/lab_gpu_smoke": "972ce9d91ee51dbf4082de2ea5176940631163837c0cff93b7320c8a37d557b8"
+    "runs/d1/build/pitfall-lab": "103d3a576871af5064a24b1870a439f50338e75ebe51031d54a3e54e9de67f76",
+    "runs/d1/build/lab_gpu_smoke": "972ce9d91ee51dbf4082de2ea5176940631163837c0cff93b7320c8a37d557b8",
+    "runs/d1/build/tests/lab_task_contract": "e2cb6dcc8522683088cb5505718bc12a22b152c3993ded0d4ae59477cc105d83"
   },
   "input_and_tolerance": {
     "input": "x=[[1,2,3],[4,5,6]], w=[[1,2],[3,4],[5,6]]",
@@ -124,32 +161,191 @@
     "No model weights downloaded or full-model execution",
     "No D2 resource protector or D3 resumable training",
     "Static boundary checks do not prove arbitrary runtime path safety",
-    "MLX peak is not process RSS or full-model memory"
+    "MLX peak is not process RSS or full-model memory",
+    "D1 checks gold structure, not its semantic correctness against source text",
+    "Contract fixtures are synthetic and do not establish model quality or RL acceptance"
   ],
   "review": {
     "status_document": "docs/status.md",
     "method": "Manual identity, coverage and sufficiency review; project.docs checks navigation only",
-    "hash_scope": "All files under cmake, src, tests, configs except __pycache__, plus root CMakeLists.txt, pyproject.toml, uv.lock and .python-version. Docs and evidence excluded to avoid self-reference.",
-    "result": "Source manifest and hashes match current tree; seven passing tests support only the D0 claims listed in docs/status.md. Learning Markdown links checked manually by script; no automatic semantic review exists.",
+    "hash_scope": "All files under cmake, src, tests, configs, fixtures, third_party except __pycache__, plus root CMakeLists.txt, pyproject.toml, uv.lock and .python-version. Formal docs and evidence excluded to avoid self-reference.",
+    "result": "Current manifest/hashes and eleven passing tests support D0/D1 and seed consistency checks. Scoring implementation unchanged; independent review and test freeze remain pending. No inference about model performance.",
     "documentation_scope": [
       "README.md",
       "AGENTS.md",
       "docs/*.md"
     ]
   },
-  "raw_report": "runs/d0/module-layout/ctest-current.xml",
+  "raw_report": "runs/d1/build/ctest-current.xml",
   "documentation_validation": {
-    "verified_at": "2026-10-23T17:18:12+08:00",
+    "verified_at": "2026-10-26T14:39:08+08:00",
     "status": "passed",
     "scope": [
       "Formal Markdown links, anchors and index",
-      "Learning Markdown local links and anchors"
+      "Learning, fixture and dependency Markdown local links and anchors"
     ],
-    "source_identity_check": "Current source manifest and hashes unchanged; prior build and numerical results retained with original verification time.",
-    "change": "Pre-commit checks: current documentation navigation, learning links, source/binary identity and all seven CTest checks passed.",
+    "source_identity_check": "Current source manifest includes dataset files and auxiliary audit tests; all eleven CTest checks passed. A fixture README link was then corrected and supplementary links rechecked.",
+    "change": "Evaluation-seed metadata, review/freezing procedure, current state and deferred-method references updated; source scoring contract unchanged.",
     "commands": [
       ".venv/bin/python tests/checks/check_project.py docs --root ."
     ],
-    "supplement": "Learning links checked with existing Markdown parsing helpers in an ad hoc script; not registered as a CTest check."
+    "supplement": "Learning, fixture and dependency links checked by an ad hoc script with existing helpers; not registered as CTest checks."
+  },
+  "task_contract_validation": {
+    "fixture": "fixtures/task_contract.json",
+    "fixture_role": "Six handwritten synthetic contract examples; not a model quality dataset",
+    "native_assertions": 62,
+    "examples": {
+      "perfect": {
+        "predictions": "runs/d1/perfect-predictions.json",
+        "predictions_sha256": "2374c2b475aa91bbc96d58bb4aa8c4ddc412e27078d6079ba091cdfc650e46d3",
+        "report": "runs/d1/perfect-report.json",
+        "metrics": {
+          "exact": {
+            "correct": 6,
+            "rate": 1.0,
+            "total": 6
+          },
+          "fields": {
+            "correct": 36,
+            "rate": 1.0,
+            "total": 36
+          },
+          "gold_non_null": {
+            "correct": 23,
+            "rate": 1.0,
+            "total": 23
+          },
+          "gold_null": {
+            "correct": 13,
+            "rate": 1.0,
+            "total": 13
+          }
+        }
+      },
+      "all-null": {
+        "predictions": "runs/d1/all-null-predictions.json",
+        "predictions_sha256": "9ba71c371c5fcaf78cda68b05794b9a86009e849aa4156244ec25f5811d618d7",
+        "report": "runs/d1/all-null-report.json",
+        "metrics": {
+          "exact": {
+            "correct": 1,
+            "rate": 0.16666666666666666,
+            "total": 6
+          },
+          "fields": {
+            "correct": 13,
+            "rate": 0.3611111111111111,
+            "total": 36
+          },
+          "gold_non_null": {
+            "correct": 0,
+            "rate": 0.0,
+            "total": 23
+          },
+          "gold_null": {
+            "correct": 13,
+            "rate": 1.0,
+            "total": 13
+          }
+        }
+      }
+    },
+    "red_phase": {
+      "missing_api_log": "runs/d1/red-build.log",
+      "missing_api_log_sha256": "b43876a05dde3d5c181125de31fb27f3d8d27a29fcbccf040a84467a2fa64532",
+      "missing_cli_log": "runs/d1/red-cli.log",
+      "missing_cli_log_sha256": "a28be602f84a599b7bb1c10ce63d446be1f659fbfef6ec52d6b0f94df0b9a254"
+    },
+    "input_limits": {
+      "bytes_per_cli_input_file": 16777216,
+      "max_json_nesting": 128,
+      "integer_representation": "signed int64",
+      "not_d2_resource_protection": true
+    }
+  },
+  "dataset_validation": {
+    "manifest": "fixtures/order-evaluation/v1/manifest.json",
+    "manifest_sha256": "97f8fb6407b23caf8930a10fecf73f5f91ae0a1c10cbd90d12b32046f59a0b1a",
+    "status": "draft_for_independent_review",
+    "samples": 52,
+    "groups": 26,
+    "checks": {
+      "checks": {
+        "dev": {
+          "samples": 26,
+          "groups": 13,
+          "nonnull_fields": 116,
+          "null_fields": 40,
+          "rule_tag_counts": {
+            "中文数量": 2,
+            "人民币": 2,
+            "完整订单": 4,
+            "币种不猜测": 2,
+            "总价非单价": 2,
+            "数字干扰": 4,
+            "无订单信息": 2,
+            "明确更正单价": 2,
+            "明确更正数量": 2,
+            "相对日期不推断": 2,
+            "绝对日期": 2,
+            "编号保留": 2,
+            "缺失字段": 6,
+            "美元": 2,
+            "金额归一化": 2,
+            "闰日": 2,
+            "零单价": 2
+          }
+        },
+        "test": {
+          "samples": 26,
+          "groups": 13,
+          "nonnull_fields": 116,
+          "null_fields": 40,
+          "rule_tag_counts": {
+            "中文数量": 2,
+            "人民币": 2,
+            "完整订单": 4,
+            "币种不猜测": 2,
+            "总价非单价": 2,
+            "数字干扰": 6,
+            "无订单信息": 2,
+            "明确更正单价": 2,
+            "明确更正数量": 2,
+            "相对日期不推断": 2,
+            "绝对日期": 2,
+            "编号保留": 2,
+            "缺失字段": 6,
+            "美元": 2,
+            "金额归一化": 2,
+            "零单价": 2
+          }
+        }
+      },
+      "native_gold_self_check": {
+        "dev": {
+          "self_check_samples": 26,
+          "all_gold_valid": true
+        },
+        "test": {
+          "self_check_samples": 26,
+          "all_gold_valid": true
+        }
+      },
+      "independent_human_review": "pending",
+      "model_quality_measured": false
+    },
+    "full_check_report": "runs/d1/dataset-check.json",
+    "full_check_report_sha256": "34712685a1a87d377cb343875013feceee1317625ff2b3b49c9ea02e58a954ac",
+    "command": ".venv/bin/python tests/checks/check_dataset.py --root fixtures/order-evaluation/v1 --binary runs/d1/build/pitfall-lab",
+    "test_frozen": false,
+    "training_split_exists": false,
+    "scoring_implementation_changed": false,
+    "limitations": [
+      "Assistant-authored synthetic data, not independently human reviewed",
+      "Source quote/normalization checks do not establish full semantic correctness",
+      "Group and source checks do not prove isolation from a future training set",
+      "Gold self-checks are not LLM performance measurements"
+    ]
   }
 }

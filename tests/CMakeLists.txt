@@ -1,5 +1,23 @@
 # Test executables and CTest registration; enabled by the root BUILD_TESTING option.
 find_program(LAB_UV_EXECUTABLE uv REQUIRED)
+# 原生用例隔离校验/计分契约，CLI 用例验证文件到报告的完整链路；两者均不需要 GPU。
+add_executable(lab_task_contract task/contract.cpp)
+target_include_directories(lab_task_contract PRIVATE "${PROJECT_SOURCE_DIR}/src")
+target_link_libraries(lab_task_contract PRIVATE lab_task)
+target_compile_options(lab_task_contract PRIVATE -Wall -Wextra -Wpedantic)
+add_test(NAME task.contract COMMAND "$<TARGET_FILE:lab_task_contract>")
+set_tests_properties(task.contract PROPERTIES LABELS "host")
+add_test(NAME task.evaluate COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/tests/test_evaluate.py" --binary "$<TARGET_FILE:pitfall-lab>"
+  --fixtures "${PROJECT_SOURCE_DIR}/fixtures/task_contract.json")
+set_tests_properties(task.evaluate PROPERTIES LABELS "host")
+add_test(NAME task.dataset COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/tests/checks/check_dataset.py"
+  --root "${PROJECT_SOURCE_DIR}/fixtures/order-evaluation/v1" --binary "$<TARGET_FILE:pitfall-lab>")
+add_test(NAME checks.dataset_failure_cases COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/tests/checks/test_dataset.py"
+  --root "${PROJECT_SOURCE_DIR}/fixtures/order-evaluation/v1")
+set_tests_properties(task.dataset checks.dataset_failure_cases PROPERTIES LABELS "host")
 add_executable(lab_gpu_smoke integration/gpu_smoke.cpp)
 target_include_directories(lab_gpu_smoke PRIVATE "${PROJECT_BINARY_DIR}/generated")
 target_link_libraries(lab_gpu_smoke PRIVATE lab_compute mlx)

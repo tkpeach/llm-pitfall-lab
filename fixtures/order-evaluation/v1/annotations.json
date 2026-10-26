@@ -1,0 +1,1138 @@
+[
+  {
+    "id": "dev-cny-complete-1",
+    "group_id": "dev-cny-complete",
+    "split": "dev",
+    "scenario": "cny-complete",
+    "rule_tags": [
+      "完整订单",
+      "人民币"
+    ],
+    "evidence": {
+      "order_id": "CN-001",
+      "product": "牛皮纸信封",
+      "quantity": "十二",
+      "unit_price_minor": "2.35",
+      "currency": "人民币",
+      "delivery_date": "2027 年 1 月 8 日"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-cny-complete-2",
+    "group_id": "dev-cny-complete",
+    "split": "dev",
+    "scenario": "cny-complete",
+    "rule_tags": [
+      "完整订单",
+      "人民币"
+    ],
+    "evidence": {
+      "order_id": "CN-001",
+      "product": "牛皮纸信封",
+      "quantity": "12",
+      "unit_price_minor": "2.35",
+      "currency": "人民币",
+      "delivery_date": "2027-01-08"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-cny-complete-1",
+    "group_id": "test-cny-complete",
+    "split": "test",
+    "scenario": "cny-complete",
+    "rule_tags": [
+      "完整订单",
+      "人民币"
+    ],
+    "evidence": {
+      "order_id": "T-CN-91",
+      "product": "硅胶杯垫",
+      "quantity": "八",
+      "unit_price_minor": "10.90",
+      "currency": "人民币",
+      "delivery_date": "2027 年 3 月 19 日"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-cny-complete-2",
+    "group_id": "test-cny-complete",
+    "split": "test",
+    "scenario": "cny-complete",
+    "rule_tags": [
+      "完整订单",
+      "人民币"
+    ],
+    "evidence": {
+      "order_id": "T-CN-91",
+      "product": "硅胶杯垫",
+      "quantity": "8",
+      "unit_price_minor": "10.90",
+      "currency": "CNY",
+      "delivery_date": "2027-03-19"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-usd-complete-1",
+    "group_id": "dev-usd-complete",
+    "split": "dev",
+    "scenario": "usd-complete",
+    "rule_tags": [
+      "完整订单",
+      "美元"
+    ],
+    "evidence": {
+      "order_id": "US-014",
+      "product": "不锈钢量勺",
+      "quantity": "四",
+      "unit_price_minor": "8.75",
+      "currency": "美元",
+      "delivery_date": "2027-02-10"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-usd-complete-2",
+    "group_id": "dev-usd-complete",
+    "split": "dev",
+    "scenario": "usd-complete",
+    "rule_tags": [
+      "完整订单",
+      "美元"
+    ],
+    "evidence": {
+      "order_id": "US-014",
+      "product": "不锈钢量勺",
+      "quantity": "4",
+      "unit_price_minor": "8.75",
+      "currency": "USD",
+      "delivery_date": "2027 年 2 月 10 日"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-usd-complete-1",
+    "group_id": "test-usd-complete",
+    "split": "test",
+    "scenario": "usd-complete",
+    "rule_tags": [
+      "完整订单",
+      "美元"
+    ],
+    "evidence": {
+      "order_id": "EXPORT-72",
+      "product": "帆布工具袋",
+      "quantity": "九",
+      "unit_price_minor": "12.40",
+      "currency": "美元",
+      "delivery_date": "2027 年 7 月 6 日"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-usd-complete-2",
+    "group_id": "test-usd-complete",
+    "split": "test",
+    "scenario": "usd-complete",
+    "rule_tags": [
+      "完整订单",
+      "美元"
+    ],
+    "evidence": {
+      "order_id": "EXPORT-72",
+      "product": "帆布工具袋",
+      "quantity": "9",
+      "unit_price_minor": "12.40",
+      "currency": "USD",
+      "delivery_date": "2027-07-06"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-missing-fields-1",
+    "group_id": "dev-missing-fields",
+    "split": "dev",
+    "scenario": "missing-fields",
+    "rule_tags": [
+      "缺失字段"
+    ],
+    "evidence": {
+      "order_id": null,
+      "product": "透明收纳盒",
+      "quantity": "六",
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "order_id": "原文未明确给出订单号",
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-missing-fields-2",
+    "group_id": "dev-missing-fields",
+    "split": "dev",
+    "scenario": "missing-fields",
+    "rule_tags": [
+      "缺失字段"
+    ],
+    "evidence": {
+      "order_id": null,
+      "product": "透明收纳盒",
+      "quantity": "6",
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "order_id": "原文未明确给出订单号",
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-missing-fields-1",
+    "group_id": "test-missing-fields",
+    "split": "test",
+    "scenario": "missing-fields",
+    "rule_tags": [
+      "缺失字段"
+    ],
+    "evidence": {
+      "order_id": "ONLY-ID-8",
+      "product": "磁性书签",
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "quantity": "数量未确定或未提供",
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-missing-fields-2",
+    "group_id": "test-missing-fields",
+    "split": "test",
+    "scenario": "missing-fields",
+    "rule_tags": [
+      "缺失字段"
+    ],
+    "evidence": {
+      "order_id": "ONLY-ID-8",
+      "product": "磁性书签",
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "quantity": "数量未确定或未提供",
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-total-only-1",
+    "group_id": "dev-total-only",
+    "split": "dev",
+    "scenario": "total-only",
+    "rule_tags": [
+      "总价非单价"
+    ],
+    "evidence": {
+      "order_id": "TOTAL-13",
+      "product": "瓦楞纸箱",
+      "quantity": "五",
+      "unit_price_minor": null,
+      "currency": "人民币",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-total-only-2",
+    "group_id": "dev-total-only",
+    "split": "dev",
+    "scenario": "total-only",
+    "rule_tags": [
+      "总价非单价"
+    ],
+    "evidence": {
+      "order_id": "TOTAL-13",
+      "product": "瓦楞纸箱",
+      "quantity": "5",
+      "unit_price_minor": null,
+      "currency": "人民币",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-total-only-1",
+    "group_id": "test-total-only",
+    "split": "test",
+    "scenario": "total-only",
+    "rule_tags": [
+      "总价非单价"
+    ],
+    "evidence": {
+      "order_id": "SUM-USD-6",
+      "product": "毛毡桌垫",
+      "quantity": "三",
+      "unit_price_minor": null,
+      "currency": "美元",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-total-only-2",
+    "group_id": "test-total-only",
+    "split": "test",
+    "scenario": "total-only",
+    "rule_tags": [
+      "总价非单价"
+    ],
+    "evidence": {
+      "order_id": "SUM-USD-6",
+      "product": "毛毡桌垫",
+      "quantity": "3",
+      "unit_price_minor": null,
+      "currency": "USD",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-ambiguous-currency-1",
+    "group_id": "dev-ambiguous-currency",
+    "split": "dev",
+    "scenario": "ambiguous-currency",
+    "rule_tags": [
+      "币种不猜测"
+    ],
+    "evidence": {
+      "order_id": "DOLLAR-3",
+      "product": "折叠雨伞",
+      "quantity": "两",
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-ambiguous-currency-2",
+    "group_id": "dev-ambiguous-currency",
+    "split": "dev",
+    "scenario": "ambiguous-currency",
+    "rule_tags": [
+      "币种不猜测"
+    ],
+    "evidence": {
+      "order_id": "DOLLAR-3",
+      "product": "折叠雨伞",
+      "quantity": "2",
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-ambiguous-currency-1",
+    "group_id": "test-ambiguous-currency",
+    "split": "test",
+    "scenario": "ambiguous-currency",
+    "rule_tags": [
+      "币种不猜测"
+    ],
+    "evidence": {
+      "order_id": "PRICE-UNSPEC-7",
+      "product": "软木留言板",
+      "quantity": "七",
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-ambiguous-currency-2",
+    "group_id": "test-ambiguous-currency",
+    "split": "test",
+    "scenario": "ambiguous-currency",
+    "rule_tags": [
+      "币种不猜测"
+    ],
+    "evidence": {
+      "order_id": "PRICE-UNSPEC-7",
+      "product": "软木留言板",
+      "quantity": "7",
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-relative-date-1",
+    "group_id": "dev-relative-date",
+    "split": "dev",
+    "scenario": "relative-date",
+    "rule_tags": [
+      "相对日期不推断"
+    ],
+    "evidence": {
+      "order_id": "REL-04",
+      "product": "棉质围裙",
+      "quantity": "十",
+      "unit_price_minor": "32",
+      "currency": "人民币",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-relative-date-2",
+    "group_id": "dev-relative-date",
+    "split": "dev",
+    "scenario": "relative-date",
+    "rule_tags": [
+      "相对日期不推断"
+    ],
+    "evidence": {
+      "order_id": "REL-04",
+      "product": "棉质围裙",
+      "quantity": "10",
+      "unit_price_minor": "32.00",
+      "currency": "CNY",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-relative-date-1",
+    "group_id": "test-relative-date",
+    "split": "test",
+    "scenario": "relative-date",
+    "rule_tags": [
+      "相对日期不推断"
+    ],
+    "evidence": {
+      "order_id": "NEXT-WEEK-9",
+      "product": "旅行洗漱包",
+      "quantity": "十一",
+      "unit_price_minor": "5.40",
+      "currency": "美元",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-relative-date-2",
+    "group_id": "test-relative-date",
+    "split": "test",
+    "scenario": "relative-date",
+    "rule_tags": [
+      "相对日期不推断"
+    ],
+    "evidence": {
+      "order_id": "NEXT-WEEK-9",
+      "product": "旅行洗漱包",
+      "quantity": "11",
+      "unit_price_minor": "5.40",
+      "currency": "USD",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-quantity-correction-1",
+    "group_id": "dev-quantity-correction",
+    "split": "dev",
+    "scenario": "quantity-correction",
+    "rule_tags": [
+      "明确更正数量"
+    ],
+    "evidence": {
+      "order_id": "FIX-Q-2",
+      "product": "圆头画笔",
+      "quantity": "十五",
+      "unit_price_minor": "1.60",
+      "currency": "人民币",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-quantity-correction-2",
+    "group_id": "dev-quantity-correction",
+    "split": "dev",
+    "scenario": "quantity-correction",
+    "rule_tags": [
+      "明确更正数量"
+    ],
+    "evidence": {
+      "order_id": "FIX-Q-2",
+      "product": "圆头画笔",
+      "quantity": "15",
+      "unit_price_minor": "1.60",
+      "currency": "CNY",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-quantity-correction-1",
+    "group_id": "test-quantity-correction",
+    "split": "test",
+    "scenario": "quantity-correction",
+    "rule_tags": [
+      "明确更正数量"
+    ],
+    "evidence": {
+      "order_id": "REV-Q-8",
+      "product": "便携药盒",
+      "quantity": "十八",
+      "unit_price_minor": "4.25",
+      "currency": "美元",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-quantity-correction-2",
+    "group_id": "test-quantity-correction",
+    "split": "test",
+    "scenario": "quantity-correction",
+    "rule_tags": [
+      "明确更正数量"
+    ],
+    "evidence": {
+      "order_id": "REV-Q-8",
+      "product": "便携药盒",
+      "quantity": "18",
+      "unit_price_minor": "4.25",
+      "currency": "USD",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-price-correction-1",
+    "group_id": "dev-price-correction",
+    "split": "dev",
+    "scenario": "price-correction",
+    "rule_tags": [
+      "明确更正单价"
+    ],
+    "evidence": {
+      "order_id": "FIX-P-5",
+      "product": "尼龙扎带",
+      "quantity": "二十",
+      "unit_price_minor": "0.85",
+      "currency": "人民币",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-price-correction-2",
+    "group_id": "dev-price-correction",
+    "split": "dev",
+    "scenario": "price-correction",
+    "rule_tags": [
+      "明确更正单价"
+    ],
+    "evidence": {
+      "order_id": "FIX-P-5",
+      "product": "尼龙扎带",
+      "quantity": "20",
+      "unit_price_minor": "0.85",
+      "currency": "CNY",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-price-correction-1",
+    "group_id": "test-price-correction",
+    "split": "test",
+    "scenario": "price-correction",
+    "rule_tags": [
+      "明确更正单价"
+    ],
+    "evidence": {
+      "order_id": "REV-P-3",
+      "product": "铝合金挂钩",
+      "quantity": "十四",
+      "unit_price_minor": "7.30",
+      "currency": "美元",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-price-correction-2",
+    "group_id": "test-price-correction",
+    "split": "test",
+    "scenario": "price-correction",
+    "rule_tags": [
+      "明确更正单价"
+    ],
+    "evidence": {
+      "order_id": "REV-P-3",
+      "product": "铝合金挂钩",
+      "quantity": "14",
+      "unit_price_minor": "7.30",
+      "currency": "USD",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-identity-and-model-1",
+    "group_id": "dev-identity-and-model",
+    "split": "dev",
+    "scenario": "identity-and-model",
+    "rule_tags": [
+      "编号保留",
+      "数字干扰"
+    ],
+    "evidence": {
+      "order_id": "0007-A",
+      "product": "A5横线本",
+      "quantity": "二十一",
+      "unit_price_minor": "4.20",
+      "currency": "人民币",
+      "delivery_date": "2027-05-12"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-identity-and-model-2",
+    "group_id": "dev-identity-and-model",
+    "split": "dev",
+    "scenario": "identity-and-model",
+    "rule_tags": [
+      "编号保留",
+      "数字干扰"
+    ],
+    "evidence": {
+      "order_id": "0007-A",
+      "product": "A5横线本",
+      "quantity": "21",
+      "unit_price_minor": "4.20",
+      "currency": "CNY",
+      "delivery_date": "2027年5月12日"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-identity-and-model-1",
+    "group_id": "test-identity-and-model",
+    "split": "test",
+    "scenario": "identity-and-model",
+    "rule_tags": [
+      "编号保留",
+      "数字干扰"
+    ],
+    "evidence": {
+      "order_id": "000042-z",
+      "product": "Type-C短线",
+      "quantity": "十六",
+      "unit_price_minor": "11.90",
+      "currency": "人民币",
+      "delivery_date": "2027年9月3日"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-identity-and-model-2",
+    "group_id": "test-identity-and-model",
+    "split": "test",
+    "scenario": "identity-and-model",
+    "rule_tags": [
+      "编号保留",
+      "数字干扰"
+    ],
+    "evidence": {
+      "order_id": "000042-z",
+      "product": "Type-C短线",
+      "quantity": "16",
+      "unit_price_minor": "11.90",
+      "currency": "CNY",
+      "delivery_date": "2027-09-03"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-large-chinese-count-1",
+    "group_id": "dev-large-chinese-count",
+    "split": "dev",
+    "scenario": "large-chinese-count",
+    "rule_tags": [
+      "中文数量",
+      "金额归一化"
+    ],
+    "evidence": {
+      "order_id": "COUNT-101",
+      "product": "泡沫护角",
+      "quantity": "一百零一",
+      "unit_price_minor": "1.05",
+      "currency": "人民币",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-large-chinese-count-2",
+    "group_id": "dev-large-chinese-count",
+    "split": "dev",
+    "scenario": "large-chinese-count",
+    "rule_tags": [
+      "中文数量",
+      "金额归一化"
+    ],
+    "evidence": {
+      "order_id": "COUNT-101",
+      "product": "泡沫护角",
+      "quantity": "101",
+      "unit_price_minor": "1.05",
+      "currency": "CNY",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-large-chinese-count-1",
+    "group_id": "test-large-chinese-count",
+    "split": "test",
+    "scenario": "large-chinese-count",
+    "rule_tags": [
+      "中文数量",
+      "金额归一化"
+    ],
+    "evidence": {
+      "order_id": "COUNT-120",
+      "product": "防尘塞",
+      "quantity": "一百二十",
+      "unit_price_minor": "2.30",
+      "currency": "人民币",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-large-chinese-count-2",
+    "group_id": "test-large-chinese-count",
+    "split": "test",
+    "scenario": "large-chinese-count",
+    "rule_tags": [
+      "中文数量",
+      "金额归一化"
+    ],
+    "evidence": {
+      "order_id": "COUNT-120",
+      "product": "防尘塞",
+      "quantity": "120",
+      "unit_price_minor": "2.30",
+      "currency": "CNY",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-zero-and-empty-1",
+    "group_id": "dev-zero-and-empty",
+    "split": "dev",
+    "scenario": "zero-and-empty",
+    "rule_tags": [
+      "零单价",
+      "缺失字段"
+    ],
+    "evidence": {
+      "order_id": "FREE-06",
+      "product": "试用标签",
+      "quantity": "二十四",
+      "unit_price_minor": "0",
+      "currency": "人民币",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-zero-and-empty-2",
+    "group_id": "dev-zero-and-empty",
+    "split": "dev",
+    "scenario": "zero-and-empty",
+    "rule_tags": [
+      "零单价",
+      "缺失字段"
+    ],
+    "evidence": {
+      "order_id": "FREE-06",
+      "product": "试用标签",
+      "quantity": "24",
+      "unit_price_minor": "0.00",
+      "currency": "CNY",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-zero-and-empty-1",
+    "group_id": "test-zero-and-empty",
+    "split": "test",
+    "scenario": "zero-and-empty",
+    "rule_tags": [
+      "零单价",
+      "缺失字段"
+    ],
+    "evidence": {
+      "order_id": "ZERO-11",
+      "product": "样品贴纸",
+      "quantity": "三十",
+      "unit_price_minor": "0",
+      "currency": "美元",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-zero-and-empty-2",
+    "group_id": "test-zero-and-empty",
+    "split": "test",
+    "scenario": "zero-and-empty",
+    "rule_tags": [
+      "零单价",
+      "缺失字段"
+    ],
+    "evidence": {
+      "order_id": "ZERO-11",
+      "product": "样品贴纸",
+      "quantity": "30",
+      "unit_price_minor": "0.00",
+      "currency": "USD",
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-calendar-and-distractors-1",
+    "group_id": "dev-calendar-and-distractors",
+    "split": "dev",
+    "scenario": "calendar-and-distractors",
+    "rule_tags": [
+      "绝对日期",
+      "闰日",
+      "数字干扰"
+    ],
+    "evidence": {
+      "order_id": "LEAP-28",
+      "product": "桌面日历",
+      "quantity": "十三",
+      "unit_price_minor": "29",
+      "currency": "人民币",
+      "delivery_date": "2028年2月29日"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-calendar-and-distractors-2",
+    "group_id": "dev-calendar-and-distractors",
+    "split": "dev",
+    "scenario": "calendar-and-distractors",
+    "rule_tags": [
+      "绝对日期",
+      "闰日",
+      "数字干扰"
+    ],
+    "evidence": {
+      "order_id": "LEAP-28",
+      "product": "桌面日历",
+      "quantity": "13",
+      "unit_price_minor": "29.00",
+      "currency": "CNY",
+      "delivery_date": "2028-02-29"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-calendar-and-distractors-1",
+    "group_id": "test-calendar-and-distractors",
+    "split": "test",
+    "scenario": "calendar-and-distractors",
+    "rule_tags": [
+      "绝对日期",
+      "数字干扰"
+    ],
+    "evidence": {
+      "order_id": "DATE-APR-30",
+      "product": "金属文件架",
+      "quantity": "十七",
+      "unit_price_minor": "38.50",
+      "currency": "人民币",
+      "delivery_date": "2027年4月30日"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-calendar-and-distractors-2",
+    "group_id": "test-calendar-and-distractors",
+    "split": "test",
+    "scenario": "calendar-and-distractors",
+    "rule_tags": [
+      "绝对日期",
+      "数字干扰"
+    ],
+    "evidence": {
+      "order_id": "DATE-APR-30",
+      "product": "金属文件架",
+      "quantity": "17",
+      "unit_price_minor": "38.50",
+      "currency": "CNY",
+      "delivery_date": "2027-04-30"
+    },
+    "null_reasons": {},
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-no-order-data-1",
+    "group_id": "dev-no-order-data",
+    "split": "dev",
+    "scenario": "no-order-data",
+    "rule_tags": [
+      "无订单信息",
+      "缺失字段"
+    ],
+    "evidence": {
+      "order_id": null,
+      "product": null,
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "order_id": "原文未明确给出订单号",
+      "product": "原文未明确给出商品名",
+      "quantity": "数量未确定或未提供",
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "dev-no-order-data-2",
+    "group_id": "dev-no-order-data",
+    "split": "dev",
+    "scenario": "no-order-data",
+    "rule_tags": [
+      "无订单信息",
+      "缺失字段"
+    ],
+    "evidence": {
+      "order_id": null,
+      "product": null,
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "order_id": "原文未明确给出订单号",
+      "product": "原文未明确给出商品名",
+      "quantity": "数量未确定或未提供",
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-no-order-data-1",
+    "group_id": "test-no-order-data",
+    "split": "test",
+    "scenario": "no-order-data",
+    "rule_tags": [
+      "无订单信息",
+      "缺失字段",
+      "数字干扰"
+    ],
+    "evidence": {
+      "order_id": null,
+      "product": null,
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "order_id": "原文未明确给出订单号",
+      "product": "原文未明确给出商品名",
+      "quantity": "数量未确定或未提供",
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  },
+  {
+    "id": "test-no-order-data-2",
+    "group_id": "test-no-order-data",
+    "split": "test",
+    "scenario": "no-order-data",
+    "rule_tags": [
+      "无订单信息",
+      "缺失字段",
+      "数字干扰"
+    ],
+    "evidence": {
+      "order_id": null,
+      "product": null,
+      "quantity": null,
+      "unit_price_minor": null,
+      "currency": null,
+      "delivery_date": null
+    },
+    "null_reasons": {
+      "order_id": "原文未明确给出订单号",
+      "product": "原文未明确给出商品名",
+      "quantity": "数量未确定或未提供",
+      "unit_price_minor": "未明确单价；不得从总价推导",
+      "currency": "原文未明确 CNY/USD；不得凭符号或语言猜测",
+      "delivery_date": "未提供绝对送达日期；相对日期不推断"
+    },
+    "review_status": "assistant_rule_reviewed; independent_human_review_pending"
+  }
+]
