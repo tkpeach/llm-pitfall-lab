@@ -1,3 +1,6 @@
+// CMake 生成的构建身份模板，将项目版本、固定 SDK 和 Metal 内核路径传给原生代码。
+// 同时约束实际 C++ 语言级别；它不负责运行时发现或自动切换依赖环境。
+
 #pragma once
 #include <string_view>
 static_assert(__cplusplus >= 202302L, "Formal sources require C++23");

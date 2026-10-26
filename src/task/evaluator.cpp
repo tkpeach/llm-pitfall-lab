@@ -1,3 +1,6 @@
+// 将模型原始输出转为任务分数：严格解析 → 契约校验 → 单条判分 → 批次汇总。
+// 同一解析器服务于评估文件和答案文本，调用层分别处理中止评估与保留错误样例。
+
 #include "task/evaluator.hpp"
 #include "lab_build_info.hpp"
 #include <nlohmann/json.hpp>
@@ -12,8 +15,6 @@
 namespace lab::task {
 namespace {
 using Json = nlohmann::json;
-// 本模块把原始输出变为可信的任务分数：严格解析 → 契约校验 → 单条判分 → 批次汇总。
-// 解析器也用于外层评估文件，但文件错误与模型答案错误在调用层采用不同处理方式。
 std::expected<Json, std::string> parse_json(std::string_view text) {
   // DOM 默认会覆盖同名键，解析完成后再检查已经来不及；用每层对象的键集合保留证据。
   // 回调看到的是解码后的键，因此转义写法不同但名称相同的键也会被拒绝。

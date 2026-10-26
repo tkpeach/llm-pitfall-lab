@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "verified_at": "2026-10-26T14:39:08+08:00",
-  "scope": "D0/D1 implementation regression and synthetic evaluation-seed consistency checks; no human label approval or model-quality acceptance",
-  "git_base_commit": "eae99d426cff3cf2478726a3908305560770a662",
+  "verified_at": "2026-10-26T19:42:00+08:00",
+  "scope": "D0-D2 native build and evaluation infrastructure with lightweight volume preflight and simple atomic checkpoint writes; no training/resume acceptance",
+  "git_base_commit": "e4b880a80c4b33b0158e0396a449134a8a5bb362",
   "git_worktree_dirty": true,
   "environment": {
     "platform": "macOS-15.7.3-arm64-arm-64bit",
@@ -22,7 +22,7 @@
   "source_sha256": {
     ".python-version": "7b55f8e67b5623c4bef3fa691288da9437d79d3aba156de48d481db32ac7d16d",
     "CMakeLists.txt": "0d6c054a2e3a370f685a19c15a30fdde2e349196d570704d1bd4d1ae37a5c6b6",
-    "cmake/build_info.hpp.in": "9f7d71077d425ef7427cea838535ec100dde7e611c9b48f61c1b255b747d7420",
+    "cmake/build_info.hpp.in": "01c18293c2c68bfc392971b5eb3f2f487336cf45c1682f5e31fb99162407242d",
     "cmake/mlx/MLXSDK.cmake": "662cbc2c9b5909d8e8a66767645983c55c90fb31287237d74295b513e99e8d8c",
     "cmake/mlx/locate_sdk.py": "2a671e4d59d2df2e05487129ac1ac77b0ce13d244d639e2cf2e7b89f4e1824cd",
     "configs/resources.toml": "ec4ddfea702559d1f3ed4e42a1fb2ed4dd9eb7e99691a8f2228c0ec327e16ba5",
@@ -33,39 +33,88 @@
     "fixtures/order-evaluation/v1/test.json": "76e4bbfc178a9627af9a1254f43733dac0bef6981521964db036c174737f83d1",
     "fixtures/task_contract.json": "80b40e80ce1fcd7e4f0634735ff9fbc6bfdda33eedfb9611fcd02e9b078ea815",
     "pyproject.toml": "5bb78378d5056497f654844abe0507c2591020fbbc3075f1c14cde3acabf9ba3",
-    "src/CMakeLists.txt": "b74674545c7310c56a75e7b2352e35efad714bdfacbabecbbd46fc13616d2ad3",
+    "src/CMakeLists.txt": "a7350be4de7c3df726a96f808d73cac80ce55561c75b6798eb9d7c935368f6b5",
+    "src/checkpoint/CMakeLists.txt": "245279fa01863fb9c4a7555b3961e915a0deecd69bffd04467508660c3d0c806",
+    "src/checkpoint/store.cpp": "e948c494b3eafb06caca540a5eee8ed22795600a579dcdd3073d9e6737066c43",
+    "src/checkpoint/store.hpp": "675bdd94f233cb9af8b805b41e8a99f6ce490d6265a6de2bb25e52c2c03dfa01",
     "src/compute/CMakeLists.txt": "06c96f891d8a9c337b254b672141a8562c5f942e3561757770ced4e2371c0edc",
-    "src/compute/mlx_runtime.cpp": "200d781af93d2854b5f421cb089fa9eae40ba9a740ec95d8826de9d67dc7fc27",
-    "src/compute/mlx_runtime.hpp": "73783477df26ca277f95f9d1058cdbb377ea566acc7af9e70d4f951ae6e228a0",
-    "src/main.cpp": "870694226b3c7ef91e403f60cda60d6fa258d6217a315186fdc63ddabac802cf",
+    "src/compute/mlx_runtime.cpp": "4f1bde4399e48c83e9837aed73abedad593b3519294f185ae48f678e1bf1fea7",
+    "src/compute/mlx_runtime.hpp": "8a7ac790d58d186c501206b5008e17f0671e4f9d1021315dd0ee226202180dcd",
+    "src/main.cpp": "d0c2317f5102573e3a1ea78c2c403e13878b73557f22962dbec352472e5da648",
+    "src/resources/CMakeLists.txt": "b8dcce70be941732af95223dcc4fabffb1e712a5e3ed37f484e520c8625e7b12",
+    "src/resources/preflight.cpp": "a6d64ff9f4bf7e45b88a0abf3ea185a8c5b272bc683ca855a56e68eb84b9ae04",
+    "src/resources/preflight.hpp": "b996fa8bd4916534c9ecdefd28c8709a2d5890e8915b3fc412c8b56e072c1724",
+    "src/resources/writer.cpp": "4f920160745027a8cc745b31d90345c048a6543af2ba2a758727b9a7efcd5ed7",
+    "src/resources/writer.hpp": "857ff5c1abdc1c2416fd987d45935e5e0bec52b634c2c23347998c6baa604c54",
+    "src/storage/CMakeLists.txt": "f1c5abc90ece6a7845621d06cec4433f7bb1fdfcca4890e593d987a03aa48fe6",
+    "src/storage/files.cpp": "807ebe86640aaa29933b62e5e271e69684d6273ec53618db67a5465504541b40",
+    "src/storage/files.hpp": "85114a1a64f269ba0965cbed9a66f50defa9e8f2a7d01411ff90f1c2aacbf614",
     "src/task/CMakeLists.txt": "7d6d027591227370e8b06c2c62c265918697bac54c97ed957c8ed3e8f473b895",
-    "src/task/evaluator.cpp": "ad75f4c2597df12cc7f1b8fad809790b1667526f43462ed09b54e3608f74b234",
-    "src/task/evaluator.hpp": "be1148bc088695e88485f9e1a6700e230892102b94717c4d43ce95f85d81908e",
-    "tests/CMakeLists.txt": "4070d7439f68b85eb0e6f6314f1680a7b89c1f9194c13a40161e130abede4f47",
+    "src/task/evaluator.cpp": "5aa2dc9de06cef39966dbee8f55036e21f40a4b593b1d90f4c3cc1a56e77747f",
+    "src/task/evaluator.hpp": "94d75f12ab2bee9881c6af12f41d89c52d9f0afeba0a6be3c47e31013c4562d0",
+    "tests/CMakeLists.txt": "f4f85973102b3d7cb926e82c92e21c20c95366c4ec39f8d179fbb86284b93cfa",
+    "tests/checkpoint/store.cpp": "214c3281dcee7dcffce2e5e9793666abd3f73ebedb55d14661064aa7f4f74f59",
     "tests/checks/check_dataset.py": "a71b252a22dec150e599392f3a073e8b748ce2e1d59b7a604d7f03b086586f82",
     "tests/checks/check_project.py": "b45c6fa0953bdbcc4672b01fe838cc4e16b333a6f64fac8e236e2c71f128ed87",
     "tests/checks/test_checks.py": "c1d58945454d595703df4f59784590a6a5d98a6f0d0b406be18e4c2c7a99548f",
     "tests/checks/test_dataset.py": "05e94948b0e8fb2f49e67633868e8eb13901e2658dbda2aaab9887f96e0d3c0b",
-    "tests/integration/gpu_smoke.cpp": "030d7827a72403dde0f594899dbaca87a3fa87fafad0fc04e60c969af91df74a",
-    "tests/task/contract.cpp": "bf934a71197fe27eadb4bafd3b8893fe7d5c57159f5963a18ab8bbb3097aa189",
+    "tests/integration/gpu_smoke.cpp": "f29be4466d2a029bb5bc91a73568282546def9aaf1ee29859d2b7be8fa6916e2",
+    "tests/resources/preflight.cpp": "348d8ba76b2b14a2004c6c9ed22a12f9d859167ad6e557df258019ffa2eeffb2",
+    "tests/resources/writer.cpp": "625579193debdc58b14c8e7fb282897349753cae53bde6a21fc36876e3035622",
+    "tests/task/contract.cpp": "4fe81ba69d9f4b0addb466502d773a646ba7cd79f23d49274a1f6fd540b23cda",
+    "tests/test_checkpoint_cli.py": "99cbf89c1365f87642774a12ab195ccfcffcef5b93b4240de9973be840952540",
     "tests/test_cli.py": "5120c2a10b82bb153a1dc3d06fe9c3256217e32e941cea82b3c1b23ee630b67b",
     "tests/test_evaluate.py": "bf63b98eca8b52d7cdaf44df5c8701dd173c85c0077977a2da871d70e2f50344",
+    "tests/test_resources_cli.py": "4b9b9e6795d1fb7e6c8d662392d283a33ebe0d1f8981b98de4cb72a55aa1f343",
     "third_party/nlohmann/LICENSE.MIT": "46a65cffd1ea955132d95a8dd921640714a8d6b537d2e4e482d31145ae95b603",
     "third_party/nlohmann/README.md": "68d22719527e757f8e62033248c01241343da8825aa9cb244568d3bf2fe80558",
     "third_party/nlohmann/include/nlohmann/json.hpp": "aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63",
+    "third_party/tomlplusplus/LICENSE": "529bc3900a9571e49db285b0df432397e70b881cc3bf48de6667ae74ff4b06d8",
+    "third_party/tomlplusplus/README.md": "a787bd40dbffee52a260115a1e0704b7d67a3ce816dd2bd231f07e20b5cbcff0",
+    "third_party/tomlplusplus/include/toml++/toml.hpp": "6b5172ad4dd6519aec67b919181fa7a38a2234131e5b2afa232dfe444819783e",
     "uv.lock": "36373ca8377d9cc6f5c66569a5f106e432b5647b59cf42d491157d126e56a60f"
   },
-  "build_directory": "runs/d1/build",
+  "build_directory": "runs/d2/build",
   "commands": [
-    "cmake -S . -B runs/d1/build -DCMAKE_BUILD_TYPE=Release -DPython3_EXECUTABLE=\"$PWD/.venv/bin/python\" -DLAB_MLX_ROOT=\"$(.venv/bin/python cmake/mlx/locate_sdk.py)\"",
-    "cmake --build runs/d1/build -j 2",
-    "ctest --test-dir runs/d1/build --output-on-failure --no-tests=error --output-junit \"$PWD/runs/d1/build/ctest-current.xml\""
+    "cmake -S . -B runs/d2/build -DCMAKE_BUILD_TYPE=Release -DPython3_EXECUTABLE=\"$PWD/.venv/bin/python\" -DLAB_MLX_ROOT=\"$(.venv/bin/python cmake/mlx/locate_sdk.py)\"",
+    "cmake --build runs/d2/build -j 2",
+    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error --output-junit \"$PWD/runs/d2/build/ctest-current.xml\"",
+    "cmake --build runs/d2/build -j 2",
+    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error -R '^(resources\\.preflight|resources\\.cli|resources\\.writer|checkpoint\\.store|checkpoint\\.transactions)$'",
+    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error -R '^project\\.(docs|build_boundary)$'",
+    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error",
+    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error (outside sandbox; Metal accessible)"
   ],
   "ctest": {
-    "total": 11,
-    "passed": 11,
+    "total": 16,
+    "passed": 16,
     "skipped": 0,
     "tests": [
+      {
+        "name": "checkpoint.store",
+        "status": "passed",
+        "output": "PASS: 19 checkpoint round-trip, hash, identity and refusal assertions"
+      },
+      {
+        "name": "resources.writer",
+        "status": "passed",
+        "output": "PASS: 18 lightweight file-session assertions"
+      },
+      {
+        "name": "checkpoint.transactions",
+        "status": "passed",
+        "output": "PASS: 37 checkpoint CLI, corruption and partial-write assertions"
+      },
+      {
+        "name": "resources.preflight",
+        "status": "passed",
+        "output": "PASS: 34 lightweight resource policy and volume assertions"
+      },
+      {
+        "name": "resources.cli",
+        "status": "passed",
+        "output": "PASS: native read-only preflight, overflow-safe denial and config/argument refusal"
+      },
       {
         "name": "task.contract",
         "status": "passed",
@@ -84,7 +133,7 @@
       {
         "name": "checks.dataset_failure_cases",
         "status": "passed",
-        "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.024s\n\nOK"
+        "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.015s\n\nOK"
       },
       {
         "name": "project.docs",
@@ -104,12 +153,12 @@
       {
         "name": "dependencies.lock",
         "status": "passed",
-        "output": "Resolved 37 packages in 83ms"
+        "output": "Resolved 37 packages in 15ms"
       },
       {
         "name": "checks.failure_cases",
         "status": "passed",
-        "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.051s\n\nOK"
+        "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.010s\n\nOK"
       },
       {
         "name": "cli.contract",
@@ -119,14 +168,32 @@
       {
         "name": "gpu.smoke",
         "status": "passed",
-        "output": "status: ok\ndevice: GPU\ndevice_name: Apple M4\nmlx_version: 0.32.4\ncpp_standard: 202302\nforward_max_error: 0\ngradient_max_error: 0\npeak_bytes: 212"
+        "output": "status: ok; device: GPU; device_name: Apple M4; mlx_version: 0.32.4; forward_max_error: 0; gradient_max_error: 0; peak_bytes: 212"
       }
-    ]
+    ],
+    "revalidation": {
+      "command": "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error -R '^(resources\\.preflight|resources\\.cli|resources\\.writer|checkpoint\\.store|checkpoint\\.transactions)$' plus project.docs and project.build_boundary",
+      "passed": [
+        "checkpoint.store",
+        "resources.writer",
+        "checkpoint.transactions",
+        "resources.preflight",
+        "resources.cli",
+        "project.docs",
+        "project.build_boundary"
+      ],
+      "result": "All affected resource, writer, checkpoint, documentation and build-boundary checks passed. Full CTest passed 16/16 outside the sandbox; the sandboxed run cannot access Metal."
+    },
+    "full_suite_result": "16/16 passed when run outside the sandbox with Metal access. The sandboxed run had 15/16 pass; gpu.smoke failed because no Metal device was visible.",
+    "sandbox_diagnostic": "The same GPU smoke executable and CTest pass outside the sandbox; the failure is caused by sandbox GPU/Metal visibility."
   },
   "binary_sha256": {
-    "runs/d1/build/pitfall-lab": "103d3a576871af5064a24b1870a439f50338e75ebe51031d54a3e54e9de67f76",
-    "runs/d1/build/lab_gpu_smoke": "972ce9d91ee51dbf4082de2ea5176940631163837c0cff93b7320c8a37d557b8",
-    "runs/d1/build/tests/lab_task_contract": "e2cb6dcc8522683088cb5505718bc12a22b152c3993ded0d4ae59477cc105d83"
+    "runs/d2/build/pitfall-lab": "4d029b02a0a83e0d3296a88738ad7ce2a5a037ed2540aa1cf8fa7cdd10a2a823",
+    "runs/d2/build/lab_gpu_smoke": "972ce9d91ee51dbf4082de2ea5176940631163837c0cff93b7320c8a37d557b8",
+    "runs/d2/build/tests/lab_task_contract": "e2cb6dcc8522683088cb5505718bc12a22b152c3993ded0d4ae59477cc105d83",
+    "runs/d2/build/tests/lab_resources_preflight": "c3550af234f0e621014522eb91796596f9285b43dae95b913d9bd4b15d3bfc89",
+    "runs/d2/build/tests/lab_resources_writer": "6c14197850ded86c0c1b733b05331962636540c7c0b0c8ae79c33af99f36ee0c",
+    "runs/d2/build/tests/lab_checkpoint_store": "590541135a07b9370e97ec2eb20228c77581551102af0f37d6c38e7c1723d96e"
   },
   "input_and_tolerance": {
     "input": "x=[[1,2,3],[4,5,6]], w=[[1,2],[3,4],[5,6]]",
@@ -159,33 +226,36 @@
   },
   "limitations": [
     "No model weights downloaded or full-model execution",
-    "No D2 resource protector or D3 resumable training",
     "Static boundary checks do not prove arbitrary runtime path safety",
     "MLX peak is not process RSS or full-model memory",
     "D1 checks gold structure, not its semantic correctness against source text",
-    "Contract fixtures are synthetic and do not establish model quality or RL acceptance"
+    "Contract fixtures are synthetic and do not establish model quality or RL acceptance",
+    "No D3 resumable training",
+    "D2 container and controlled file writers only; future downloads, conversion and MLX serialization require explicit integration",
+    "Process-crash and partial-write behavior tested, not power loss or storage hardware durability",
+    "The sandbox cannot access Metal. gpu.smoke passes outside the sandbox on Apple M4."
   ],
   "review": {
     "status_document": "docs/status.md",
     "method": "Manual identity, coverage and sufficiency review; project.docs checks navigation only",
     "hash_scope": "All files under cmake, src, tests, configs, fixtures, third_party except __pycache__, plus root CMakeLists.txt, pyproject.toml, uv.lock and .python-version. Formal docs and evidence excluded to avoid self-reference.",
-    "result": "Current manifest/hashes and eleven passing tests support D0/D1 and seed consistency checks. Scoring implementation unchanged; independent review and test freeze remain pending. No inference about model performance.",
+    "result": "The current full CTest suite passed 16/16 outside the sandbox. The same gpu.smoke test fails in the sandbox because Metal is not visible there. Resource preflight, write session and checkpoint changes passed their targeted checks; no claim of D3 complete training state or model acceptance; dataset independent review remains pending.",
     "documentation_scope": [
       "README.md",
       "AGENTS.md",
       "docs/*.md"
     ]
   },
-  "raw_report": "runs/d1/build/ctest-current.xml",
+  "raw_report": "runs/d2/build/ctest-current.xml",
   "documentation_validation": {
-    "verified_at": "2026-10-26T14:39:08+08:00",
+    "verified_at": "2026-10-26T19:42:00+08:00",
     "status": "passed",
     "scope": [
       "Formal Markdown links, anchors and index",
       "Learning, fixture and dependency Markdown local links and anchors"
     ],
-    "source_identity_check": "Current source manifest includes dataset files and auxiliary audit tests; all eleven CTest checks passed. A fixture README link was then corrected and supplementary links rechecked.",
-    "change": "Evaluation-seed metadata, review/freezing procedure, current state and deferred-method references updated; source scoring contract unchanged.",
+    "source_identity_check": "Current source hashes refreshed; project.docs passed in the full 16-test run outside the sandbox.",
+    "change": "Keep resource-policy.md focused on settled rules; document lightweight volume-only preflight and simple checkpoint write session.",
     "commands": [
       ".venv/bin/python tests/checks/check_project.py docs --root ."
     ],
@@ -335,9 +405,9 @@
       "independent_human_review": "pending",
       "model_quality_measured": false
     },
-    "full_check_report": "runs/d1/dataset-check.json",
+    "full_check_report": "runs/d2/dataset-check.json",
     "full_check_report_sha256": "34712685a1a87d377cb343875013feceee1317625ff2b3b49c9ea02e58a954ac",
-    "command": ".venv/bin/python tests/checks/check_dataset.py --root fixtures/order-evaluation/v1 --binary runs/d1/build/pitfall-lab",
+    "command": ".venv/bin/python tests/checks/check_dataset.py --root fixtures/order-evaluation/v1 --binary runs/d2/build/pitfall-lab",
     "test_frozen": false,
     "training_split_exists": false,
     "scoring_implementation_changed": false,
@@ -346,6 +416,100 @@
       "Source quote/normalization checks do not establish full semantic correctness",
       "Group and source checks do not prove isolation from a future training set",
       "Gold self-checks are not LLM performance measurements"
+    ]
+  },
+  "resource_preflight": {
+    "native_assertions": 34,
+    "real_project_snapshot": {
+      "allocated_bytes": null,
+      "allowed": true,
+      "available_bytes": 58521890816,
+      "max_growth_bytes": 26309636096,
+      "operation": "read_only_resource_preflight",
+      "policy": {
+        "min_free_bytes": 32212254720,
+        "project_limit_bytes": 21474836480,
+        "warning_bytes": 19327352832
+      },
+      "project_usage_measured": false,
+      "reason": "volume_peak_within_floor_project_usage_unknown",
+      "requested_peak_bytes": 0,
+      "reservation_created": false,
+      "warning": false
+    },
+    "real_project_report": "runs/d2/resource-lightweight-current.json",
+    "command": "./runs/d2/build/pitfall-lab resources --root \"$PWD\" --config configs/resources.toml --peak-bytes 0",
+    "red_phase": {
+      "missing_api_log": "runs/d2/red-build.log",
+      "missing_api_log_sha256": "e5a50fc19c55273a3a7a4f68e8160b7bb887939c40b7d414dc638f9ec4643572",
+      "missing_cli_log": "runs/d2/red-cli.log",
+      "missing_cli_log_sha256": "9ceda374ece73c651983c8318a95fce36197a9d747811d3ebcf13735cf4152d6"
+    },
+    "limitations": [
+      "Project total usage is not measured; allocated_bytes is null.",
+      "Volume free-space check is a snapshot, not a reservation; concurrent writers can consume space.",
+      "The declared peak is checked before checkpoint saving; write-time I/O errors remain possible."
+    ]
+  },
+  "controlled_writes_and_checkpoint": {
+    "writer_native_assertions": 18,
+    "checkpoint_native_assertions": 19,
+    "process_test_result": "PASS: 37 checkpoint CLI, corruption and partial-write assertions",
+    "coordination": "No cross-process write lease; concurrent operations may compete for volume space.",
+    "publication": "macOS RENAME_EXCL then directory fsync; old generations are not overwritten",
+    "integrity": "Streaming CommonCrypto SHA-256 and byte lengths; strict version/identity/file-set validation",
+    "real_project_demo": {
+      "request": "runs/d2/demo/request.json",
+      "request_sha256": "57f7b112776dee8daa59bbbee8bdbab0365c03856c365d3316107086ff296405",
+      "saved_checkpoint": {
+        "artifacts": [
+          {
+            "bytes": 223,
+            "name": "control.json",
+            "sha256": "05bc13ec68d4f8afb6997c9901237011fe1eba883c8bd92e72143b4c07378293"
+          },
+          {
+            "bytes": 22,
+            "name": "state.bin",
+            "sha256": "a2fddc32939fa72ad10643f8b12707099ed305018c35fa6de9eedcfbb1010e7d"
+          }
+        ],
+        "control": {
+          "purpose": "container validation, not training",
+          "step": 1
+        },
+        "directory": "/Users/ych/ryf/code/llm-pitfall-lab/runs/checkpoints/d2-demo-1793003199801147000",
+        "format_version": 1,
+        "identity": {
+          "configuration": "d2-demo-v1",
+          "data": "synthetic-demo-v1",
+          "model": "d2-container-demo-not-a-model",
+          "template": "not-applicable"
+        }
+      },
+      "new_process_verify_report": "runs/d2/demo/verify-report.json",
+      "new_process_verify_report_sha256": "5120eb95be9bd89e7d7168aad3cdb3a732ea5defe5c5fccc62bc23a52493ad19",
+      "material": "Synthetic binary payload and control state, not MLX tensors or a training checkpoint"
+    },
+    "red_phase": {
+      "missing_writer_api": {
+        "path": "runs/d2/transaction/red-writer.log",
+        "sha256": "d3966ddccf66c0fd81c413ca35fabf27138ac755302acded3365547e11bfcb0c"
+      },
+      "missing_checkpoint_api": {
+        "path": "runs/d2/transaction/red-checkpoint.log",
+        "sha256": "1d880e7201d48e2fec5000eb468c4f593ee553066b5c04fc19ee3eed4abede94"
+      },
+      "fifo_open_regression": {
+        "path": "runs/d2/transaction/red-fifo.log",
+        "sha256": "144f27c71758e54479fd5ccbd5fe872c6f7639118549534373efbc934686a7d5"
+      }
+    },
+    "limitations": [
+      "One volume-space preflight before checkpoint save; no in-flight space checks or disk reservation.",
+      "Checkpoint producer owns correctness/completeness of identity and training state; D3/D5 pending.",
+      "No live MLX tensor serialization, training pause/resume, power-loss or all hardware-fault acceptance.",
+      "Interrupted writes may leave pending directories; they are not resumed or automatically removed."
     ]
   }
 }

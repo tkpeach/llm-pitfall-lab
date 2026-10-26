@@ -1,3 +1,6 @@
+// 隔离验证订单输出契约和单条计分：合法基准、非法变体、类型/日期边界与部分得分。
+// 直接调用正式任务模块，检查评分规则本身，不生成模型答案或衡量模型效果。
+
 #include "task/evaluator.hpp"
 #include <algorithm>
 #include <cmath>

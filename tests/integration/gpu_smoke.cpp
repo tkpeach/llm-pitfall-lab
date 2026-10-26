@@ -1,3 +1,6 @@
+// 用固定解析参考检验正式 GPU 初始化后的微型前向/反向链路，失败通过退出码报告。
+// 数值样例、容差和观测属于测试，不进入产品初始化，也不替代目标模型验收。
+
 #include "compute/mlx_runtime.hpp"
 #include "lab_build_info.hpp"
 
@@ -9,8 +12,6 @@
 #include <print>
 #include <stdexcept>
 
-// D0 numerical fixture. Test inputs, reference results, tolerances and memory
-// counters belong here; production initialization must not execute this case.
 int main() {
   try {
     const auto runtime = lab::compute::initialize_gpu();

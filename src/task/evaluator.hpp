@@ -1,3 +1,6 @@
+// 定义订单抽取的规范记录、校验结果及评分报告，供 CLI 与后续训练/评估链路复用。
+// 对外隔离 JSON 解析库类型；接口区分评估材料错误与应计入分数的答案错误。
+
 #pragma once
 #include <array>
 #include <cstdint>

@@ -1,3 +1,6 @@
+// 对接固定 MLX SDK，校验库身份和 Metal 内核路径，准备本机 GPU 运行时。
+// 初始化失败明确返回错误，不切换到 CPU；模型计算和数值验证由调用方负责。
+
 #include "compute/mlx_runtime.hpp"
 #include "lab_build_info.hpp"
 
