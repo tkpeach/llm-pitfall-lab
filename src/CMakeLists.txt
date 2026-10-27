@@ -3,6 +3,7 @@ add_subdirectory(compute)
 add_subdirectory(task)
 add_subdirectory(resources)
 add_subdirectory(checkpoint)
+add_subdirectory(runner)
 
 add_executable(pitfall-lab main.cpp)
 target_link_libraries(pitfall-lab PRIVATE lab_task lab_checkpoint)

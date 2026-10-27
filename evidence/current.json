@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "verified_at": "2026-10-26T19:42:00+08:00",
-  "scope": "D0-D2 native build and evaluation infrastructure with lightweight volume preflight and simple atomic checkpoint writes; no training/resume acceptance",
-  "git_base_commit": "e4b880a80c4b33b0158e0396a449134a8a5bb362",
+  "verified_at": "2026-10-27T09:40:46+08:00",
+  "scope": "D0-D3 infrastructure and generic training pause/resume control verified with synthetic LoRA/Adam lifecycle comparison; no target-model training acceptance",
+  "git_base_commit": "42f22c93cba463cce21cd16aa8e0ed9e5729edc8",
   "git_worktree_dirty": true,
   "environment": {
     "platform": "macOS-15.7.3-arm64-arm-64bit",
@@ -33,7 +33,7 @@
     "fixtures/order-evaluation/v1/test.json": "76e4bbfc178a9627af9a1254f43733dac0bef6981521964db036c174737f83d1",
     "fixtures/task_contract.json": "80b40e80ce1fcd7e4f0634735ff9fbc6bfdda33eedfb9611fcd02e9b078ea815",
     "pyproject.toml": "5bb78378d5056497f654844abe0507c2591020fbbc3075f1c14cde3acabf9ba3",
-    "src/CMakeLists.txt": "a7350be4de7c3df726a96f808d73cac80ce55561c75b6798eb9d7c935368f6b5",
+    "src/CMakeLists.txt": "20510324fdfbb65a9136951853ecfdddf24939dfeaedb5894634aeb81d576071",
     "src/checkpoint/CMakeLists.txt": "245279fa01863fb9c4a7555b3961e915a0deecd69bffd04467508660c3d0c806",
     "src/checkpoint/store.cpp": "e948c494b3eafb06caca540a5eee8ed22795600a579dcdd3073d9e6737066c43",
     "src/checkpoint/store.hpp": "675bdd94f233cb9af8b805b41e8a99f6ce490d6265a6de2bb25e52c2c03dfa01",
@@ -46,26 +46,33 @@
     "src/resources/preflight.hpp": "b996fa8bd4916534c9ecdefd28c8709a2d5890e8915b3fc412c8b56e072c1724",
     "src/resources/writer.cpp": "4f920160745027a8cc745b31d90345c048a6543af2ba2a758727b9a7efcd5ed7",
     "src/resources/writer.hpp": "857ff5c1abdc1c2416fd987d45935e5e0bec52b634c2c23347998c6baa604c54",
+    "src/runner/CMakeLists.txt": "6762e277e81ff900db0032dc6c6fed5c2cb6cff25ea2a8088b55c814188841ac",
+    "src/runner/control.cpp": "0ae5cfad94d58160a733338a00f46d9c318c83f11a213414ec929b89ada987d7",
+    "src/runner/control.hpp": "0c595c73b7fd5878bd64af1bb4c9806319b3bbed2282a549ca2a78c359d631e6",
     "src/storage/CMakeLists.txt": "f1c5abc90ece6a7845621d06cec4433f7bb1fdfcca4890e593d987a03aa48fe6",
     "src/storage/files.cpp": "807ebe86640aaa29933b62e5e271e69684d6273ec53618db67a5465504541b40",
     "src/storage/files.hpp": "85114a1a64f269ba0965cbed9a66f50defa9e8f2a7d01411ff90f1c2aacbf614",
     "src/task/CMakeLists.txt": "7d6d027591227370e8b06c2c62c265918697bac54c97ed957c8ed3e8f473b895",
     "src/task/evaluator.cpp": "5aa2dc9de06cef39966dbee8f55036e21f40a4b593b1d90f4c3cc1a56e77747f",
     "src/task/evaluator.hpp": "94d75f12ab2bee9881c6af12f41d89c52d9f0afeba0a6be3c47e31013c4562d0",
-    "tests/CMakeLists.txt": "f4f85973102b3d7cb926e82c92e21c20c95366c4ec39f8d179fbb86284b93cfa",
+    "tests/CMakeLists.txt": "107bf413f0d38edb99441191416b64a76bba03356bd7912b50472bd25618f23e",
     "tests/checkpoint/store.cpp": "214c3281dcee7dcffce2e5e9793666abd3f73ebedb55d14661064aa7f4f74f59",
     "tests/checks/check_dataset.py": "a71b252a22dec150e599392f3a073e8b748ce2e1d59b7a604d7f03b086586f82",
     "tests/checks/check_project.py": "b45c6fa0953bdbcc4672b01fe838cc4e16b333a6f64fac8e236e2c71f128ed87",
     "tests/checks/test_checks.py": "c1d58945454d595703df4f59784590a6a5d98a6f0d0b406be18e4c2c7a99548f",
     "tests/checks/test_dataset.py": "05e94948b0e8fb2f49e67633868e8eb13901e2658dbda2aaab9887f96e0d3c0b",
     "tests/integration/gpu_smoke.cpp": "f29be4466d2a029bb5bc91a73568282546def9aaf1ee29859d2b7be8fa6916e2",
+    "tests/integration/training_lifecycle.cpp": "7a594e723f162288b57dd4667bc739395e5e531afea1e593bb5b101f289c73d3",
     "tests/resources/preflight.cpp": "348d8ba76b2b14a2004c6c9ed22a12f9d859167ad6e557df258019ffa2eeffb2",
     "tests/resources/writer.cpp": "625579193debdc58b14c8e7fb282897349753cae53bde6a21fc36876e3035622",
+    "tests/runner/control.cpp": "bf3f6ce2ccb9c0b0bae3248fd017e88cafc31334b31f375165c13bb5d447d309",
     "tests/task/contract.cpp": "4fe81ba69d9f4b0addb466502d773a646ba7cd79f23d49274a1f6fd540b23cda",
     "tests/test_checkpoint_cli.py": "99cbf89c1365f87642774a12ab195ccfcffcef5b93b4240de9973be840952540",
     "tests/test_cli.py": "5120c2a10b82bb153a1dc3d06fe9c3256217e32e941cea82b3c1b23ee630b67b",
     "tests/test_evaluate.py": "bf63b98eca8b52d7cdaf44df5c8701dd173c85c0077977a2da871d70e2f50344",
     "tests/test_resources_cli.py": "4b9b9e6795d1fb7e6c8d662392d283a33ebe0d1f8981b98de4cb72a55aa1f343",
+    "tests/test_training_lifecycle.py": "378485a95479dfff0c8261b922ce61b894f56321f67eb9e20dbf07ec424f8923",
+    "tests/test_training_lifecycle_driver.py": "cf8cad311ca38a10fb51ecdd65aef53e271a4a40e934b8afb4ed2087175da74a",
     "third_party/nlohmann/LICENSE.MIT": "46a65cffd1ea955132d95a8dd921640714a8d6b537d2e4e482d31145ae95b603",
     "third_party/nlohmann/README.md": "68d22719527e757f8e62033248c01241343da8825aa9cb244568d3bf2fe80558",
     "third_party/nlohmann/include/nlohmann/json.hpp": "aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63",
@@ -83,11 +90,16 @@
     "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error -R '^(resources\\.preflight|resources\\.cli|resources\\.writer|checkpoint\\.store|checkpoint\\.transactions)$'",
     "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error -R '^project\\.(docs|build_boundary)$'",
     "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error",
-    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error (outside sandbox; Metal accessible)"
+    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error (outside sandbox; Metal accessible)",
+    "ctest --test-dir runs/d2/build -R '^training.lifecycle$' --output-on-failure (outside sandbox; Metal accessible)",
+    "cmake --build runs/d2/build -j 2",
+    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error (outside sandbox; Metal accessible)",
+    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error --output-junit \"$PWD/runs/d2/build/ctest-current.xml\" (outside sandbox; Metal accessible; 18/18)",
+    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error --output-junit /Users/ych/ryf/code/llm-pitfall-lab/runs/d2/build/ctest-current.xml (outside sandbox; Metal accessible)"
   ],
   "ctest": {
-    "total": 16,
-    "passed": 16,
+    "total": 19,
+    "passed": 19,
     "skipped": 0,
     "tests": [
       {
@@ -133,7 +145,7 @@
       {
         "name": "checks.dataset_failure_cases",
         "status": "passed",
-        "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.015s\n\nOK"
+        "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.012s\n\nOK"
       },
       {
         "name": "project.docs",
@@ -153,7 +165,7 @@
       {
         "name": "dependencies.lock",
         "status": "passed",
-        "output": "Resolved 37 packages in 15ms"
+        "output": "Resolved 37 packages in 17ms"
       },
       {
         "name": "checks.failure_cases",
@@ -168,24 +180,88 @@
       {
         "name": "gpu.smoke",
         "status": "passed",
-        "output": "status: ok; device: GPU; device_name: Apple M4; mlx_version: 0.32.4; forward_max_error: 0; gradient_max_error: 0; peak_bytes: 212"
+        "output": "status: ok\ndevice: GPU\ndevice_name: Apple M4\nmlx_version: 0.32.4\ncpp_standard: 202302\nforward_max_error: 0\ngradient_max_error: 0\npeak_bytes: 212"
+      },
+      {
+        "name": "runner.control",
+        "status": "passed",
+        "output": "PASS: runner pause boundary, checkpoint failure and uninterrupted control"
+      },
+      {
+        "name": "training.lifecycle",
+        "status": "passed",
+        "output": "{\"adapter_b_updated\": true, \"continuous_exit\": 0, \"exact_tensor_matches\": [\"a\", \"b\", \"losses\", \"ma\", \"mb\", \"rng_key\", \"sample_ids\", \"va\", \"vb\"], \"pause_exit\": 0, \"pause_latency_ms\": 8.845, \"pause_step\": 3, \"pause_worker_exited\": true, \"resume_exit\": 0, \"total_steps\": 8}"
+      },
+      {
+        "name": "training.driver_cleanup",
+        "status": "passed",
+        "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.648s\n\nOK"
       }
     ],
     "revalidation": {
-      "command": "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error -R '^(resources\\.preflight|resources\\.cli|resources\\.writer|checkpoint\\.store|checkpoint\\.transactions)$' plus project.docs and project.build_boundary",
+      "command": "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error --output-junit /Users/ych/ryf/code/llm-pitfall-lab/runs/d2/build/ctest-current.xml (outside sandbox; Metal accessible)",
       "passed": [
         "checkpoint.store",
         "resources.writer",
         "checkpoint.transactions",
         "resources.preflight",
         "resources.cli",
+        "task.contract",
+        "task.evaluate",
+        "task.dataset",
+        "checks.dataset_failure_cases",
         "project.docs",
-        "project.build_boundary"
+        "project.build_boundary",
+        "dependencies.sdk",
+        "dependencies.lock",
+        "checks.failure_cases",
+        "cli.contract",
+        "gpu.smoke",
+        "runner.control",
+        "training.lifecycle",
+        "training.driver_cleanup"
       ],
-      "result": "All affected resource, writer, checkpoint, documentation and build-boundary checks passed. Full CTest passed 16/16 outside the sandbox; the sandboxed run cannot access Metal."
+      "result": "Full CTest passed 19/19 outside the sandbox with Metal access; pending entry pauses preserve committed progress without an update, four real-child failure regressions verify driver cleanup, and synthetic continuous/pause/new-process-resume state matches exactly. No target-model training acceptance."
     },
-    "full_suite_result": "16/16 passed when run outside the sandbox with Metal access. The sandboxed run had 15/16 pass; gpu.smoke failed because no Metal device was visible.",
-    "sandbox_diagnostic": "The same GPU smoke executable and CTest pass outside the sandbox; the failure is caused by sandbox GPU/Metal visibility."
+    "full_suite_result": "Full CTest passed 19/19 outside the sandbox with Metal access; pending entry pauses preserve committed progress without an update, four real-child failure regressions verify driver cleanup, and synthetic continuous/pause/new-process-resume state matches exactly. No target-model training acceptance.",
+    "sandbox_diagnostic": "The same GPU smoke executable and CTest pass outside the sandbox; the failure is caused by sandbox GPU/Metal visibility.",
+    "d3_lifecycle": {
+      "status": "generic_runner_and_synthetic_lifecycle_verified",
+      "pause_step": 3,
+      "total_steps": 8,
+      "pause_latency_ms": 8.845,
+      "worker_exited": true,
+      "resume_process": "new independent process",
+      "exact_tensor_matches": [
+        "a",
+        "b",
+        "losses",
+        "ma",
+        "mb",
+        "rng_key",
+        "sample_ids",
+        "va",
+        "vb"
+      ],
+      "adapter_b_updated": true,
+      "scope": "The formal runner handles SIGINT/SIGTERM at entry and after complete updates, invokes the checkpoint callback only on pause, and reports paused only after save succeeds. Entry tests cover initial, restored and completed progress. Synthetic LoRA/Adam integration uses formal GPU initialization and checkpoint APIs. No target LLM training is included.",
+      "driver_cleanup": {
+        "check": "training.driver_cleanup",
+        "tests": 4,
+        "cases": [
+          "ready rendezvous timeout",
+          "ignored pause signal exit timeout",
+          "unexpected driver exception",
+          "continuous/resume worker timeout"
+        ],
+        "method": "real CPU child processes; assert child returncode is collected before the helper returns or raises",
+        "status": "passed"
+      },
+      "regression_red_phase": {
+        "runner.control": "Added entry-pause assertion failed before the fix: pending pause changed the committed progress.",
+        "training.driver_cleanup": "Four tests failed before implementation because the cleanup helpers/timeout argument were absent."
+      }
+    }
   },
   "binary_sha256": {
     "runs/d2/build/pitfall-lab": "4d029b02a0a83e0d3296a88738ad7ce2a5a037ed2540aa1cf8fa7cdd10a2a823",
@@ -193,7 +269,9 @@
     "runs/d2/build/tests/lab_task_contract": "e2cb6dcc8522683088cb5505718bc12a22b152c3993ded0d4ae59477cc105d83",
     "runs/d2/build/tests/lab_resources_preflight": "c3550af234f0e621014522eb91796596f9285b43dae95b913d9bd4b15d3bfc89",
     "runs/d2/build/tests/lab_resources_writer": "6c14197850ded86c0c1b733b05331962636540c7c0b0c8ae79c33af99f36ee0c",
-    "runs/d2/build/tests/lab_checkpoint_store": "590541135a07b9370e97ec2eb20228c77581551102af0f37d6c38e7c1723d96e"
+    "runs/d2/build/tests/lab_checkpoint_store": "590541135a07b9370e97ec2eb20228c77581551102af0f37d6c38e7c1723d96e",
+    "runs/d2/build/tests/lab_runner_control": "a06ff6fa96e29f51e8c782e613011e1403630379545bcbe8ea03e73c335ab1fe",
+    "runs/d2/build/tests/lab_training_lifecycle": "a9db70621e869c70ab274fd5c970c9e342f347abe661b01296b8617c365f63ae"
   },
   "input_and_tolerance": {
     "input": "x=[[1,2,3],[4,5,6]], w=[[1,2],[3,4],[5,6]]",
@@ -230,7 +308,7 @@
     "MLX peak is not process RSS or full-model memory",
     "D1 checks gold structure, not its semantic correctness against source text",
     "Contract fixtures are synthetic and do not establish model quality or RL acceptance",
-    "No D3 resumable training",
+    "No target-model weights or model-specific training command; D3 validates generic runner control through a synthetic training lifecycle.",
     "D2 container and controlled file writers only; future downloads, conversion and MLX serialization require explicit integration",
     "Process-crash and partial-write behavior tested, not power loss or storage hardware durability",
     "The sandbox cannot access Metal. gpu.smoke passes outside the sandbox on Apple M4."
@@ -239,7 +317,7 @@
     "status_document": "docs/status.md",
     "method": "Manual identity, coverage and sufficiency review; project.docs checks navigation only",
     "hash_scope": "All files under cmake, src, tests, configs, fixtures, third_party except __pycache__, plus root CMakeLists.txt, pyproject.toml, uv.lock and .python-version. Formal docs and evidence excluded to avoid self-reference.",
-    "result": "The current full CTest suite passed 16/16 outside the sandbox. The same gpu.smoke test fails in the sandbox because Metal is not visible there. Resource preflight, write session and checkpoint changes passed their targeted checks; no claim of D3 complete training state or model acceptance; dataset independent review remains pending.",
+    "result": "Full CTest passed 19/19 outside the sandbox with Metal access; pending entry pauses preserve committed progress without an update, four real-child failure regressions verify driver cleanup, and synthetic continuous/pause/new-process-resume state matches exactly. No target-model training acceptance. Dataset independent review remains pending.",
     "documentation_scope": [
       "README.md",
       "AGENTS.md",
@@ -254,7 +332,7 @@
       "Formal Markdown links, anchors and index",
       "Learning, fixture and dependency Markdown local links and anchors"
     ],
-    "source_identity_check": "Current source hashes refreshed; project.docs passed in the full 16-test run outside the sandbox.",
+    "source_identity_check": "Current source inventory and hashes refreshed including the new cleanup test; project.docs passed in the current 19-test run outside the sandbox.",
     "change": "Keep resource-policy.md focused on settled rules; document lightweight volume-only preflight and simple checkpoint write session.",
     "commands": [
       ".venv/bin/python tests/checks/check_project.py docs --root ."
@@ -507,8 +585,8 @@
     },
     "limitations": [
       "One volume-space preflight before checkpoint save; no in-flight space checks or disk reservation.",
-      "Checkpoint producer owns correctness/completeness of identity and training state; D3/D5 pending.",
-      "No live MLX tensor serialization, training pause/resume, power-loss or all hardware-fault acceptance.",
+      "Checkpoint producers own state identity and completeness; synthetic D3 lifecycle verified separately, target-model D5 pending.",
+      "Container tests alone do not establish training recovery; no power-loss or all hardware-fault acceptance.",
       "Interrupted writes may leave pending directories; they are not resumed or automatically removed."
     ]
   }

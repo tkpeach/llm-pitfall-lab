@@ -40,6 +40,7 @@ cmake --build runs/d0/build -j 2
 | `src/task/CMakeLists.txt` | 严格任务评估模块与私有 JSON 依赖 |
 | `src/resources/CMakeLists.txt` | 磁盘策略、轻量卷空间预检和检查点写入会话，私有使用 TOML/JSON 依赖 |
 | `src/storage/CMakeLists.txt`、`src/checkpoint/CMakeLists.txt` | 原生文件原语及检查点容器，资源协调和发布路径见检查点专题 |
+| `src/runner/CMakeLists.txt` | 暂停信号控制、更新边界 checkpoint 回调与训练循环协调 |
 | `tests/CMakeLists.txt` | 测试可执行文件和 CTest 注册 |
 | `tests/checks/` | 文档、构建边界检查器及检查器自身的错误用例测试 |
 
@@ -102,6 +103,9 @@ ctest --test-dir runs/d0/build --output-on-failure --no-tests=error
 | `checks.failure_cases` | 用受控错误验证导航、编译标准、SDK 与研究目录依赖检查能拒绝问题 |
 | `cli.contract` | 从无关工作目录验证原生帮助、版本及错误用法 |
 | `gpu.smoke` | CTest 直接从独立工作目录运行 C++ 集成测试，调用正式初始化后验证 GPU 前向/反向 |
+| `runner.control` | 正式运行控制模块的信号、入口及更新安全边界、检查点失败和连续执行行为 |
+| `training.driver_cleanup` | 使用真实 CPU 子进程验证等待就绪、暂停退出和连续/恢复超时及异常路径均终止并回收 worker |
+| `training.lifecycle` | 使用正式 runner、GPU 初始化与 checkpoint API，比较合成 LoRA/Adam 连续运行和暂停后新进程恢复 |
 | `task.contract` | 原生严格解析、字段类型、日期、非法输出与部分计分检查 |
 | `task.evaluate` | 调用原生 CLI 验证六条契约样例、ID 匹配、空值分组、阶段指标、缺失/非法输出分母及输入错误 |
 | `task.dataset` | 检查候选评估种子的身份、分组隔离、标注证据/归一化及原生 gold 合法性；不替代独立人工语义复核 |

@@ -69,7 +69,32 @@ file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/test-work/gpu")
 add_test(NAME gpu.smoke COMMAND "$<TARGET_FILE:lab_gpu_smoke>")
 set_tests_properties(gpu.smoke PROPERTIES LABELS "gpu" RUN_SERIAL TRUE
   WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/test-work/gpu")
+add_executable(lab_runner_control runner/control.cpp)
+target_include_directories(lab_runner_control PRIVATE "${PROJECT_SOURCE_DIR}/src")
+target_link_libraries(lab_runner_control PRIVATE lab_runner)
+target_compile_options(lab_runner_control PRIVATE -Wall -Wextra -Wpedantic)
+add_test(NAME runner.control COMMAND "$<TARGET_FILE:lab_runner_control>")
+set_tests_properties(runner.control PROPERTIES LABELS "host")
+add_executable(lab_training_lifecycle integration/training_lifecycle.cpp)
+target_include_directories(lab_training_lifecycle PRIVATE
+  "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/third_party/nlohmann/include"
+  "${PROJECT_BINARY_DIR}/generated")
+target_link_libraries(lab_training_lifecycle PRIVATE lab_compute lab_checkpoint lab_runner mlx)
+target_compile_options(lab_training_lifecycle PRIVATE -Wall -Wextra -Wpedantic)
+set_target_properties(lab_training_lifecycle PROPERTIES BUILD_RPATH "${LAB_MLX_ROOT}/lib")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/test-work/training-lifecycle")
+add_test(NAME training.lifecycle COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/tests/test_training_lifecycle.py"
+  --binary "$<TARGET_FILE:lab_training_lifecycle>")
+set_tests_properties(training.lifecycle PROPERTIES LABELS "gpu" RUN_SERIAL TRUE
+  WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/test-work/training-lifecycle")
 set_tests_properties(project.docs project.build_boundary dependencies.sdk dependencies.lock
   checks.failure_cases cli.contract PROPERTIES LABELS "host")
 get_property(lab_tests DIRECTORY PROPERTY TESTS)
 set_tests_properties(${lab_tests} PROPERTIES TIMEOUT 60)
+
+add_test(NAME training.driver_cleanup COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/tests/test_training_lifecycle_driver.py")
+set_tests_properties(training.driver_cleanup PROPERTIES LABELS "host" TIMEOUT 15)
+# Keep the driver alive long enough to perform its own timeout cleanup.
+set_tests_properties(training.lifecycle PROPERTIES TIMEOUT 120)
