@@ -1,4 +1,4 @@
-add_library(lab_compute STATIC mlx_runtime.cpp)
+add_library(lab_compute STATIC mlx_runtime.cpp gated_delta.cpp)
 target_include_directories(lab_compute
   PUBLIC "${PROJECT_SOURCE_DIR}/src"
   PRIVATE "${PROJECT_BINARY_DIR}/generated")

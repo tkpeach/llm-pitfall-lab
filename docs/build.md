@@ -41,6 +41,7 @@ cmake --build runs/d0/build -j 2
 | `src/resources/CMakeLists.txt` | 磁盘策略、轻量卷空间预检和检查点写入会话，私有使用 TOML/JSON 依赖 |
 | `src/storage/CMakeLists.txt`、`src/checkpoint/CMakeLists.txt` | 原生文件原语及检查点容器，资源协调和发布路径见检查点专题 |
 | `src/runner/CMakeLists.txt` | 暂停信号控制、更新边界 checkpoint 回调与训练循环协调 |
+| `src/model/CMakeLists.txt` | 固定 Qwen3.5-4B 量化语言模型的加载、前向与混合缓存 |
 | `tests/CMakeLists.txt` | 测试可执行文件和 CTest 注册 |
 | `tests/checks/` | 文档、构建边界检查器及检查器自身的错误用例测试 |
 
@@ -103,6 +104,11 @@ ctest --test-dir runs/d0/build --output-on-failure --no-tests=error
 | `checks.failure_cases` | 用受控错误验证导航、编译标准、SDK 与研究目录依赖检查能拒绝问题 |
 | `cli.contract` | 从无关工作目录验证原生帮助、版本及错误用法 |
 | `gpu.smoke` | CTest 直接从独立工作目录运行 C++ 集成测试，调用正式初始化后验证 GPU 前向/反向 |
+| `compute.gated_delta` | BF16 混合精度及原生 float32 路径的解析递推和分块状态对照 |
+| `model.reference`（显式配置制品后） | 调用独立数值对照工具，验收固定 D4 场景的输入、三种模式、全层/缓存覆盖、数值判据和贪心结果；对照能力本身位于 tools |
+| `model.config` | 固定模型配置、几何/层序列/量化错误，以及制品身份、损坏和路径错误拒绝 |
+| `checks.model_preparation` | 无网络模拟分段响应截断续传、重组和 Range 被忽略时的拒绝 |
+| `conversion.rules` | Metal 小张量调用真实上游 sanitizer，核对重命名、转轴、归一化偏移、量化布局及异常拒绝；不替代完整权重复现 |
 | `runner.control` | 正式运行控制模块的信号、入口及更新安全边界、检查点失败和连续执行行为 |
 | `training.driver_cleanup` | 使用真实 CPU 子进程验证等待就绪、暂停退出和连续/恢复超时及异常路径均终止并回收 worker |
 | `training.lifecycle` | 使用正式 runner、GPU 初始化与 checkpoint API，比较合成 LoRA/Adam 连续运行和暂停后新进程恢复 |
@@ -133,3 +139,5 @@ ctest --test-dir runs/d0/build -L host --output-on-failure --no-tests=error
 验收保持 `BUILD_TESTING=ON`（默认值）；`--no-tests=error` 防止零测试被当作通过。只运行 `host` 不算 D0 全部通过。`gpu` 标签的测试必须在具有本机 Metal 访问能力的执行环境中运行；失败不能改为跳过后宣称验收通过。各测试有超时，GPU 测试串行执行，不创建常驻进程。
 
 构建文件、编译数据库和 CTest 日志存于 `runs/`，不提交 Git。静态边界检查只能发现显式依赖，不能证明任意动态构造的路径都安全；任务契约、资源保护和恢复行为的检查在对应模块建立后接入。
+
+目标模型制品准备与独立数值对照命令见 [固定目标模型短验证](model-validation.md)；小型计算或配置测试通过不能代替 D4 全部验收。

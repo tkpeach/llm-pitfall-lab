@@ -98,3 +98,40 @@ add_test(NAME training.driver_cleanup COMMAND "${Python3_EXECUTABLE}"
 set_tests_properties(training.driver_cleanup PROPERTIES LABELS "host" TIMEOUT 15)
 # Keep the driver alive long enough to perform its own timeout cleanup.
 set_tests_properties(training.lifecycle PROPERTIES TIMEOUT 120)
+
+add_executable(lab_gated_delta integration/gated_delta.cpp)
+target_link_libraries(lab_gated_delta PRIVATE lab_compute mlx)
+target_compile_options(lab_gated_delta PRIVATE -Wall -Wextra -Wpedantic)
+set_target_properties(lab_gated_delta PROPERTIES BUILD_RPATH "${LAB_MLX_ROOT}/lib")
+add_test(NAME compute.gated_delta COMMAND "$<TARGET_FILE:lab_gated_delta>")
+set_tests_properties(compute.gated_delta PROPERTIES LABELS "gpu" RUN_SERIAL TRUE TIMEOUT 60)
+
+add_executable(lab_qwen35_config model/config.cpp)
+target_include_directories(lab_qwen35_config PRIVATE "${PROJECT_SOURCE_DIR}/third_party/nlohmann/include")
+target_link_libraries(lab_qwen35_config PRIVATE lab_model)
+set_target_properties(lab_qwen35_config PROPERTIES BUILD_RPATH "${LAB_MLX_ROOT}/lib")
+add_test(NAME model.config COMMAND "$<TARGET_FILE:lab_qwen35_config>"
+  "${PROJECT_SOURCE_DIR}/fixtures/qwen35-4b/config.json")
+set_tests_properties(model.config PROPERTIES LABELS "host" TIMEOUT 30)
+
+add_test(NAME checks.model_preparation COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/tests/checks/test_model_preparation.py")
+set_tests_properties(checks.model_preparation PROPERTIES LABELS "host" TIMEOUT 30)
+
+# Large pinned artifacts are prepared explicitly, never downloaded by CTest.
+set(LAB_QWEN35_ARTIFACT "" CACHE PATH "Verified Qwen3.5-4B language artifact for D4 reference acceptance")
+if(LAB_QWEN35_ARTIFACT)
+  if(NOT EXISTS "${LAB_QWEN35_ARTIFACT}/artifact.json")
+    message(FATAL_ERROR "LAB_QWEN35_ARTIFACT requires a complete artifact.json; prepare the pinned model first")
+  endif()
+  add_test(NAME model.reference COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/model/test_qwen35_comparison.py"
+    --root "${PROJECT_SOURCE_DIR}" --artifact "${LAB_QWEN35_ARTIFACT}"
+    --binary "$<TARGET_FILE:lab_qwen35_probe>" --resource-binary "$<TARGET_FILE:pitfall-lab>"
+    --report "${PROJECT_BINARY_DIR}/model-reference.json")
+  set_tests_properties(model.reference PROPERTIES LABELS "gpu" RUN_SERIAL TRUE TIMEOUT 900)
+endif()
+
+add_test(NAME conversion.rules COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/tests/checks/test_qwen35_conversion.py")
+set_tests_properties(conversion.rules PROPERTIES LABELS "gpu" RUN_SERIAL TRUE TIMEOUT 60)

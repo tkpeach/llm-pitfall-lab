@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "recipe_id": "qwen35-4b-text-affine4-g64-v1",
+  "repository": "Qwen/Qwen3.5-4B",
+  "revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+  "packages": {"mlx": "0.32.4", "mlx-lm": "0.32.2"},
+  "upstream": {
+    "sanitizer": "https://github.com/ml-explore/mlx-lm/blob/v0.32.2/mlx_lm/models/qwen3_5.py",
+    "load_quantize_save": "https://github.com/ml-explore/mlx-lm/blob/v0.32.2/mlx_lm/utils.py"
+  },
+  "critical_files": [
+    {"package": "mlx-lm", "path": "mlx_lm/models/qwen3_5.py", "sha256": "851449fd9989d6bf4b3c4fed92ddc3be5f1e781eb2246f89c54d7eff2518d9c6"},
+    {"package": "mlx-lm", "path": "mlx_lm/utils.py", "sha256": "2803ff8d2298b0854797d78b16387c394801d16c57bfb30cf42ac4efbdee2873"},
+    {"package": "mlx", "path": "mlx/nn/layers/quantized.py", "sha256": "8ca4574a212f14cbec4c446826474583ef0bf1e2cb1630574fd730c77af03b33"},
+    {"package": "mlx", "path": "mlx/lib/libmlx.dylib", "sha256": "bbe4ee5ab0a23bb4a95c6c5ee9ddc7520abbfbdd64615ee9fbb3ad218d44786b"},
+    {"package": "mlx", "path": "mlx/lib/mlx.metallib", "sha256": "f36b01c44dd5f2d9020deb1ac6ad53dc085de81af19396694c5963ef3a12137f"}
+  ],
+  "sanitization": {
+    "input_prefix": "model.language_model.",
+    "output_prefix": "language_model.model.",
+    "drop_prefixes": {"model.visual.": "vision", "vision_tower.": "vision", "mtp.": "mtp"},
+    "conv_suffix": "conv1d.weight",
+    "conv_axis_move": [2, 1],
+    "offset_norm_suffixes": [".input_layernorm.weight", ".post_attention_layernorm.weight", "model.norm.weight", ".q_norm.weight", ".k_norm.weight"],
+    "norm_offset": 1.0,
+    "norm_offset_condition": "upstream detects original conv layout; apply only to listed one-dimensional norm weights",
+    "unlisted_source_names": "reject"
+  },
+  "quantization": {"bits": 4, "group_size": 64, "mode": "affine"},
+  "configuration": {"remove": ["vision_config"], "rope_alias": "upstream normalizes rope_type to type", "retain_other_upstream_fields": true},
+  "copy_unchanged": ["tokenizer.json", "tokenizer_config.json", "chat_template.jinja", "merges.txt", "vocab.json", "LICENSE"],
+  "expected_counts": {"source_language": 426, "source_vision": 297, "source_mtp": 15, "sanitized": 426, "quantized_matrices": 249, "output_tensors": 924}
+}

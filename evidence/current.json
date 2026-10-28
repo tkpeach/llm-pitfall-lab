@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "verified_at": "2026-10-27T09:40:46+08:00",
-  "scope": "D0-D3 infrastructure and generic training pause/resume control verified with synthetic LoRA/Adam lifecycle comparison; no target-model training acceptance",
-  "git_base_commit": "42f22c93cba463cce21cd16aa8e0ed9e5729edc8",
+  "verified_at": "2026-10-27T16:06:46+08:00",
+  "scope": "D0-D4 infrastructure, synthetic training lifecycle, and fixed Qwen3.5-4B language-only short forward/reference acceptance; no target training or D5 acceptance",
+  "git_base_commit": "0efcceb7a5b27089bd8843410c36cb954fd4755d",
   "git_worktree_dirty": true,
   "environment": {
     "platform": "macOS-15.7.3-arm64-arm-64bit",
@@ -13,7 +13,9 @@
     "uv": "uv 0.12.5 (Homebrew 2026-08-14 aarch64-apple-darwin)",
     "mlx": "0.32.4",
     "mlx_lm": "0.32.2",
-    "sdk_root": "/Users/ych/ryf/code/llm-pitfall-lab/.venv/lib/python3.12/site-packages/mlx"
+    "sdk_root": "/Users/ych/ryf/code/llm-pitfall-lab/.venv/lib/python3.12/site-packages/mlx",
+    "transformers": "5.20.2",
+    "tokenizers": "0.23.3"
   },
   "sdk_sha256": {
     "lib/libmlx.dylib": "bbe4ee5ab0a23bb4a95c6c5ee9ddc7520abbfbdd64615ee9fbb3ad218d44786b",
@@ -21,7 +23,7 @@
   },
   "source_sha256": {
     ".python-version": "7b55f8e67b5623c4bef3fa691288da9437d79d3aba156de48d481db32ac7d16d",
-    "CMakeLists.txt": "0d6c054a2e3a370f685a19c15a30fdde2e349196d570704d1bd4d1ae37a5c6b6",
+    "CMakeLists.txt": "50694bc4e44a7e3587c422bacd3b27aadb21ec886af73399fc4541355983efa6",
     "cmake/build_info.hpp.in": "01c18293c2c68bfc392971b5eb3f2f487336cf45c1682f5e31fb99162407242d",
     "cmake/mlx/MLXSDK.cmake": "662cbc2c9b5909d8e8a66767645983c55c90fb31287237d74295b513e99e8d8c",
     "cmake/mlx/locate_sdk.py": "2a671e4d59d2df2e05487129ac1ac77b0ce13d244d639e2cf2e7b89f4e1824cd",
@@ -31,16 +33,25 @@
     "fixtures/order-evaluation/v1/dev.json": "b0aa4409e5a1cf09cd4effae2aa2ffb3a6873274578b1a63dfad3cdd99bcd5ae",
     "fixtures/order-evaluation/v1/manifest.json": "97f8fb6407b23caf8930a10fecf73f5f91ae0a1c10cbd90d12b32046f59a0b1a",
     "fixtures/order-evaluation/v1/test.json": "76e4bbfc178a9627af9a1254f43733dac0bef6981521964db036c174737f83d1",
+    "fixtures/qwen35-4b/LICENSE": "bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a",
+    "fixtures/qwen35-4b/README.md": "81481832c47bc9d413549349a8842e5ddcc6b6904c1721667edf515fce1e9578",
+    "fixtures/qwen35-4b/config.json": "184ef24b3ad56f089111f0f029e632b8f04f0029c3af112552af974c3f8d7886",
+    "fixtures/qwen35-4b/numerical-input.json": "4ecf6514c50c359635e4b07c7015e25ee43ad4d300c8136e84fa7bf9fc3420c3",
     "fixtures/task_contract.json": "80b40e80ce1fcd7e4f0634735ff9fbc6bfdda33eedfb9611fcd02e9b078ea815",
     "pyproject.toml": "5bb78378d5056497f654844abe0507c2591020fbbc3075f1c14cde3acabf9ba3",
-    "src/CMakeLists.txt": "20510324fdfbb65a9136951853ecfdddf24939dfeaedb5894634aeb81d576071",
+    "src/CMakeLists.txt": "793f0396c77bc82cae7ddc4bceda25402c329a8df644c3c613b942cb1f278f5f",
     "src/checkpoint/CMakeLists.txt": "245279fa01863fb9c4a7555b3961e915a0deecd69bffd04467508660c3d0c806",
     "src/checkpoint/store.cpp": "e948c494b3eafb06caca540a5eee8ed22795600a579dcdd3073d9e6737066c43",
     "src/checkpoint/store.hpp": "675bdd94f233cb9af8b805b41e8a99f6ce490d6265a6de2bb25e52c2c03dfa01",
-    "src/compute/CMakeLists.txt": "06c96f891d8a9c337b254b672141a8562c5f942e3561757770ced4e2371c0edc",
+    "src/compute/CMakeLists.txt": "fdcc4fe602d243b9d4dfa96790e2578eb904026762cf28b45d5b09b3550d3602",
+    "src/compute/gated_delta.cpp": "cf112359d5071d2befe7c37bb2be065e6c19c7f33debc6a8b02c2f20a156b484",
+    "src/compute/gated_delta.hpp": "da39884ad27ef9b625ed8f942b715a2a578a131c3577c094e60318adaff307c4",
     "src/compute/mlx_runtime.cpp": "4f1bde4399e48c83e9837aed73abedad593b3519294f185ae48f678e1bf1fea7",
     "src/compute/mlx_runtime.hpp": "8a7ac790d58d186c501206b5008e17f0671e4f9d1021315dd0ee226202180dcd",
     "src/main.cpp": "d0c2317f5102573e3a1ea78c2c403e13878b73557f22962dbec352472e5da648",
+    "src/model/CMakeLists.txt": "147d86d8561e20e6501e1368c0cdb81e14fdf0b0208b8096e6de9d39720d59f6",
+    "src/model/qwen35.cpp": "eeddced0a4fe62f1a72f92ce8d54db7f93b5341064f1f47a4ad597d93ad9b1a8",
+    "src/model/qwen35.hpp": "885024b539e0f387c8c0675143b9d4e5a4d4bfb9b97c9158c13301e509fb49e9",
     "src/resources/CMakeLists.txt": "b8dcce70be941732af95223dcc4fabffb1e712a5e3ed37f484e520c8625e7b12",
     "src/resources/preflight.cpp": "a6d64ff9f4bf7e45b88a0abf3ea185a8c5b272bc683ca855a56e68eb84b9ae04",
     "src/resources/preflight.hpp": "b996fa8bd4916534c9ecdefd28c8709a2d5890e8915b3fc412c8b56e072c1724",
@@ -55,14 +66,19 @@
     "src/task/CMakeLists.txt": "7d6d027591227370e8b06c2c62c265918697bac54c97ed957c8ed3e8f473b895",
     "src/task/evaluator.cpp": "5aa2dc9de06cef39966dbee8f55036e21f40a4b593b1d90f4c3cc1a56e77747f",
     "src/task/evaluator.hpp": "94d75f12ab2bee9881c6af12f41d89c52d9f0afeba0a6be3c47e31013c4562d0",
-    "tests/CMakeLists.txt": "107bf413f0d38edb99441191416b64a76bba03356bd7912b50472bd25618f23e",
+    "tests/CMakeLists.txt": "0666746b37f87ec329b114dd50194fc947b4f15678e83f30ed141b8032385819",
     "tests/checkpoint/store.cpp": "214c3281dcee7dcffce2e5e9793666abd3f73ebedb55d14661064aa7f4f74f59",
     "tests/checks/check_dataset.py": "a71b252a22dec150e599392f3a073e8b748ce2e1d59b7a604d7f03b086586f82",
     "tests/checks/check_project.py": "b45c6fa0953bdbcc4672b01fe838cc4e16b333a6f64fac8e236e2c71f128ed87",
     "tests/checks/test_checks.py": "c1d58945454d595703df4f59784590a6a5d98a6f0d0b406be18e4c2c7a99548f",
     "tests/checks/test_dataset.py": "05e94948b0e8fb2f49e67633868e8eb13901e2658dbda2aaab9887f96e0d3c0b",
+    "tests/checks/test_model_preparation.py": "771fcd214f28c79964d4de8fb2c3e9ee98c9f8270b639eec71097d962597d821",
+    "tests/checks/test_qwen35_conversion.py": "ccc614da1083fb23bdff2f7817b4d99da75f1b6a7193ea87e5183d802b5e5c07",
+    "tests/integration/gated_delta.cpp": "5b3e1a808798eddbef57e03cf413bc774de87b34345bcd8dd9308317a207b3ff",
     "tests/integration/gpu_smoke.cpp": "f29be4466d2a029bb5bc91a73568282546def9aaf1ee29859d2b7be8fa6916e2",
     "tests/integration/training_lifecycle.cpp": "7a594e723f162288b57dd4667bc739395e5e531afea1e593bb5b101f289c73d3",
+    "tests/model/config.cpp": "310b4be2af54c3a1c7c242c616af0437d683a943f73a701dfcfaa2cd13dff170",
+    "tests/model/test_qwen35_comparison.py": "d3a6ef67be3ed3ce6c6b58b345589fcdb614e0511d47a8c5a99d9260cefbe1ee",
     "tests/resources/preflight.cpp": "348d8ba76b2b14a2004c6c9ed22a12f9d859167ad6e557df258019ffa2eeffb2",
     "tests/resources/writer.cpp": "625579193debdc58b14c8e7fb282897349753cae53bde6a21fc36876e3035622",
     "tests/runner/control.cpp": "bf3f6ce2ccb9c0b0bae3248fd017e88cafc31334b31f375165c13bb5d447d309",
@@ -73,33 +89,47 @@
     "tests/test_resources_cli.py": "4b9b9e6795d1fb7e6c8d662392d283a33ebe0d1f8981b98de4cb72a55aa1f343",
     "tests/test_training_lifecycle.py": "378485a95479dfff0c8261b922ce61b894f56321f67eb9e20dbf07ec424f8923",
     "tests/test_training_lifecycle_driver.py": "cf8cad311ca38a10fb51ecdd65aef53e271a4a40e934b8afb4ed2087175da74a",
+    "third_party/mlx-lm-gdn/LICENSE": "ccfab7ccb2ea306f71531c8ca77bb55507606cd90768b1e32b8b52ab5b48cf01",
+    "third_party/mlx-lm-gdn/README.md": "6f80dc8fe76ddaa86736c7372856901c505ec2f0b07f50815ccb188831f61c82",
     "third_party/nlohmann/LICENSE.MIT": "46a65cffd1ea955132d95a8dd921640714a8d6b537d2e4e482d31145ae95b603",
     "third_party/nlohmann/README.md": "68d22719527e757f8e62033248c01241343da8825aa9cb244568d3bf2fe80558",
     "third_party/nlohmann/include/nlohmann/json.hpp": "aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63",
     "third_party/tomlplusplus/LICENSE": "529bc3900a9571e49db285b0df432397e70b881cc3bf48de6667ae74ff4b06d8",
     "third_party/tomlplusplus/README.md": "a787bd40dbffee52a260115a1e0704b7d67a3ce816dd2bd231f07e20b5cbcff0",
     "third_party/tomlplusplus/include/toml++/toml.hpp": "6b5172ad4dd6519aec67b919181fa7a38a2234131e5b2afa232dfe444819783e",
+    "tools/CMakeLists.txt": "74fe97e8cc0dc60937689468d47aeaed5678b3a7fecfde4661cf0b22d8ac0a45",
+    "tools/model_artifacts/qwen35/README.md": "acd6ff10c4a46469f9eb070d4f13d2fa31f8a858866a5629cb81df6e1026acd7",
+    "tools/model_artifacts/qwen35/prepare_qwen35.py": "46477cd1584b53d79f75b271fa24b33f5d7e5be35e7314eea0e095004835b6dd",
+    "tools/model_artifacts/qwen35/qwen35_conversion.py": "27c6c9b63d555bda8242a8ce934713f891a0425597be7133ac0306e054a7eac1",
+    "tools/model_artifacts/qwen35/qwen35_conversion_rules.json": "ecf8ecec8872b7a00d7ad518999173090d419c3fa01a13621960795bdbfacb5d",
+    "tools/model_artifacts/qwen35/verify_qwen35_reproduction.py": "d646c4b3867e1cd5a5df4bbeafd55f781bc2c5e9869b2ee3a79760a732c6e253",
+    "tools/numerical_validation/qwen35/CMakeLists.txt": "e5c5d08cde0b1a3bc215449725349725f50ac8b3558d376a5bb0bcced823651c",
+    "tools/numerical_validation/qwen35/README.md": "37100da150d23a9e4e7199c22ef04b68c4ecef9ad62155e279e31539cef8b1b6",
+    "tools/numerical_validation/qwen35/compare.py": "6bb8e7f66d81799143c58bbed9581972ecb601652581765ebf8c3111a2f2a548",
+    "tools/numerical_validation/qwen35/probe.cpp": "b2af2ae6762e8ce7f2b21ad1939579f6e4912b3516fff99fabe537bc0a476f2e",
+    "tools/numerical_validation/qwen35/process.py": "5853f9f13f6994dc6eda17c893e131f5c2dc3f46910f2b25c648afba0c6d8dbb",
+    "tools/numerical_validation/qwen35/reference.py": "f5d4541d7e692e2b12e8045240882e4827efed6882542f120ae70f2d1bc08a7b",
     "uv.lock": "36373ca8377d9cc6f5c66569a5f106e432b5647b59cf42d491157d126e56a60f"
   },
   "build_directory": "runs/d2/build",
   "commands": [
-    "cmake -S . -B runs/d2/build -DCMAKE_BUILD_TYPE=Release -DPython3_EXECUTABLE=\"$PWD/.venv/bin/python\" -DLAB_MLX_ROOT=\"$(.venv/bin/python cmake/mlx/locate_sdk.py)\"",
+    "prepare_qwen35.py download --root PROJECT --binary runs/d2/build/pitfall-lab (fixed official revision, network access; evolved during preparation)",
+    ".venv/bin/python tests/reference/prepare_qwen35.py convert --root PROJECT --binary runs/d2/build/pitfall-lab (outside sandbox; Metal accessible)",
+    "cmake -S . -B runs/d2/build -DLAB_QWEN35_ARTIFACT=PROJECT/runs/models/qwen35-4b-text-4bit",
     "cmake --build runs/d2/build -j 2",
-    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error --output-junit \"$PWD/runs/d2/build/ctest-current.xml\"",
-    "cmake --build runs/d2/build -j 2",
-    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error -R '^(resources\\.preflight|resources\\.cli|resources\\.writer|checkpoint\\.store|checkpoint\\.transactions)$'",
-    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error -R '^project\\.(docs|build_boundary)$'",
-    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error",
-    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error (outside sandbox; Metal accessible)",
-    "ctest --test-dir runs/d2/build -R '^training.lifecycle$' --output-on-failure (outside sandbox; Metal accessible)",
-    "cmake --build runs/d2/build -j 2",
-    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error (outside sandbox; Metal accessible)",
-    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error --output-junit \"$PWD/runs/d2/build/ctest-current.xml\" (outside sandbox; Metal accessible; 18/18)",
-    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error --output-junit /Users/ych/ryf/code/llm-pitfall-lab/runs/d2/build/ctest-current.xml (outside sandbox; Metal accessible)"
+    "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error --output-junit /Users/ych/ryf/code/llm-pitfall-lab/runs/d2/build/ctest-current.xml (outside sandbox; Metal accessible)",
+    ".venv/bin/python tests/checks/check_project.py docs --root .",
+    "Supplemental local Markdown link/anchor check using check_project helpers over learning, fixtures and third_party (13 files)",
+    "du -sk .",
+    "./runs/d2/build/pitfall-lab resources --root PROJECT --config configs/resources.toml --peak-bytes 0",
+    ".venv/bin/python tests/reference/prepare_qwen35.py convert --root PROJECT --binary PROJECT/runs/d2/build/pitfall-lab --output PROJECT/runs/models/qwen35-4b-text-4bit-repro",
+    ".venv/bin/python tests/reference/verify_qwen35_reproduction.py --baseline runs/models/qwen35-4b-text-4bit --candidate runs/models/qwen35-4b-text-4bit-repro --report runs/d4/conversion-reproduction.json",
+    ".venv/bin/python tools/model_artifacts/qwen35/verify_qwen35_reproduction.py --baseline runs/models/qwen35-4b-text-4bit --candidate runs/models/qwen35-4b-text-4bit-repro --report runs/d4/conversion-reproduction-relocated.json",
+    ".venv/bin/python tools/numerical_validation/qwen35/compare.py --root PROJECT --artifact PROJECT/runs/models/qwen35-4b-text-4bit --input PROJECT/runs/d4/standalone-input.json --binary PROJECT/runs/d4/no-tests-build/tools/numerical_validation/qwen35/lab_qwen35_probe --resource-binary PROJECT/runs/d4/no-tests-build/pitfall-lab --report PROJECT/runs/d4/standalone-comparison.json"
   ],
   "ctest": {
-    "total": 19,
-    "passed": 19,
+    "total": 24,
+    "passed": 24,
     "skipped": 0,
     "tests": [
       {
@@ -145,7 +175,7 @@
       {
         "name": "checks.dataset_failure_cases",
         "status": "passed",
-        "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.012s\n\nOK"
+        "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.013s\n\nOK"
       },
       {
         "name": "project.docs",
@@ -165,12 +195,12 @@
       {
         "name": "dependencies.lock",
         "status": "passed",
-        "output": "Resolved 37 packages in 17ms"
+        "output": "Resolved 37 packages in 22ms"
       },
       {
         "name": "checks.failure_cases",
         "status": "passed",
-        "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.010s\n\nOK"
+        "output": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.012s\n\nOK"
       },
       {
         "name": "cli.contract",
@@ -190,16 +220,41 @@
       {
         "name": "training.lifecycle",
         "status": "passed",
-        "output": "{\"adapter_b_updated\": true, \"continuous_exit\": 0, \"exact_tensor_matches\": [\"a\", \"b\", \"losses\", \"ma\", \"mb\", \"rng_key\", \"sample_ids\", \"va\", \"vb\"], \"pause_exit\": 0, \"pause_latency_ms\": 8.845, \"pause_step\": 3, \"pause_worker_exited\": true, \"resume_exit\": 0, \"total_steps\": 8}"
+        "output": "{\"adapter_b_updated\": true, \"continuous_exit\": 0, \"exact_tensor_matches\": [\"a\", \"b\", \"losses\", \"ma\", \"mb\", \"rng_key\", \"sample_ids\", \"va\", \"vb\"], \"pause_exit\": 0, \"pause_latency_ms\": 7.678, \"pause_step\": 3, \"pause_worker_exited\": true, \"resume_exit\": 0, \"total_steps\": 8}"
       },
       {
         "name": "training.driver_cleanup",
         "status": "passed",
-        "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.648s\n\nOK"
+        "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.643s\n\nOK"
+      },
+      {
+        "name": "compute.gated_delta",
+        "status": "passed",
+        "output": "expected_state_first_component: 0.874625\nunadapted_sdk_state_max_error: 0.000375032\nunadapted_output_matches: 1\nanalytic_state_max_error: 0\nchunk_state_max_error: 0"
+      },
+      {
+        "name": "model.config",
+        "status": "passed",
+        "output": "PASS: fixed Qwen3.5 config, geometry, dtype and artifact rejection contracts"
+      },
+      {
+        "name": "checks.model_preparation",
+        "status": "passed",
+        "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.069s\n\nOK"
+      },
+      {
+        "name": "model.reference",
+        "status": "passed",
+        "output": "PASS: fixed D4 input, three modes, all layers/states, numerical limits and greedy output"
+      },
+      {
+        "name": "conversion.rules",
+        "status": "passed",
+        "output": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.121s\n\nOK"
       }
     ],
     "revalidation": {
-      "command": "ctest --test-dir runs/d2/build --output-on-failure --no-tests=error --output-junit /Users/ych/ryf/code/llm-pitfall-lab/runs/d2/build/ctest-current.xml (outside sandbox; Metal accessible)",
+      "command": "ctest --test-dir runs/d2/build --output-on-failure --output-junit ctest-current.xml (outside sandbox; Metal accessible)",
       "passed": [
         "checkpoint.store",
         "resources.writer",
@@ -219,17 +274,22 @@
         "gpu.smoke",
         "runner.control",
         "training.lifecycle",
-        "training.driver_cleanup"
+        "training.driver_cleanup",
+        "compute.gated_delta",
+        "model.config",
+        "checks.model_preparation",
+        "model.reference",
+        "conversion.rules"
       ],
-      "result": "Full CTest passed 19/19 outside the sandbox with Metal access; pending entry pauses preserve committed progress without an update, four real-child failure regressions verify driver cleanup, and synthetic continuous/pause/new-process-resume state matches exactly. No target-model training acceptance."
+      "result": "Full CTest 24/24 passed after separating numerical tooling from acceptance tests. model.reference invokes the independent tool on a fixed design scenario and checks input/mode/layer/cache/threshold/output coverage. Independently, BUILD_TESTING=OFF builds the tools with zero registered tests and a different 23-token request passed all 229 tensor comparisons."
     },
-    "full_suite_result": "Full CTest passed 19/19 outside the sandbox with Metal access; pending entry pauses preserve committed progress without an update, four real-child failure regressions verify driver cleanup, and synthetic continuous/pause/new-process-resume state matches exactly. No target-model training acceptance.",
+    "full_suite_result": "Full CTest 24/24 passed after separating numerical tooling from acceptance tests. model.reference invokes the independent tool on a fixed design scenario and checks input/mode/layer/cache/threshold/output coverage. Independently, BUILD_TESTING=OFF builds the tools with zero registered tests and a different 23-token request passed all 229 tensor comparisons.",
     "sandbox_diagnostic": "The same GPU smoke executable and CTest pass outside the sandbox; the failure is caused by sandbox GPU/Metal visibility.",
     "d3_lifecycle": {
       "status": "generic_runner_and_synthetic_lifecycle_verified",
       "pause_step": 3,
       "total_steps": 8,
-      "pause_latency_ms": 8.845,
+      "pause_latency_ms": 7.678,
       "worker_exited": true,
       "resume_process": "new independent process",
       "exact_tensor_matches": [
@@ -271,7 +331,10 @@
     "runs/d2/build/tests/lab_resources_writer": "6c14197850ded86c0c1b733b05331962636540c7c0b0c8ae79c33af99f36ee0c",
     "runs/d2/build/tests/lab_checkpoint_store": "590541135a07b9370e97ec2eb20228c77581551102af0f37d6c38e7c1723d96e",
     "runs/d2/build/tests/lab_runner_control": "a06ff6fa96e29f51e8c782e613011e1403630379545bcbe8ea03e73c335ab1fe",
-    "runs/d2/build/tests/lab_training_lifecycle": "a9db70621e869c70ab274fd5c970c9e342f347abe661b01296b8617c365f63ae"
+    "runs/d2/build/tests/lab_training_lifecycle": "a9db70621e869c70ab274fd5c970c9e342f347abe661b01296b8617c365f63ae",
+    "runs/d2/build/tests/lab_gated_delta": "4cc9563958d8f45844df777244bcd682ca75783a6b8e470694ffe73e755f7758",
+    "runs/d2/build/tests/lab_qwen35_config": "efb38ae396e7209a4b77ce35f2706bbf7323ff26a1bfc78b20976dfcb64293a7",
+    "runs/d2/build/tools/numerical_validation/qwen35/lab_qwen35_probe": "e0f63625aa1f3ae1180aa7f3782f2847c390d90fe183382402006cc3d9dfa348"
   },
   "input_and_tolerance": {
     "input": "x=[[1,2,3],[4,5,6]], w=[[1,2],[3,4],[5,6]]",
@@ -303,41 +366,54 @@
     "max_absolute_error": 1e-05
   },
   "limitations": [
-    "No model weights downloaded or full-model execution",
-    "Static boundary checks do not prove arbitrary runtime path safety",
-    "MLX peak is not process RSS or full-model memory",
-    "D1 checks gold structure, not its semantic correctness against source text",
-    "Contract fixtures are synthetic and do not establish model quality or RL acceptance",
-    "No target-model weights or model-specific training command; D3 validates generic runner control through a synthetic training lifecycle.",
-    "D2 container and controlled file writers only; future downloads, conversion and MLX serialization require explicit integration",
-    "Process-crash and partial-write behavior tested, not power loss or storage hardware durability",
-    "The sandbox cannot access Metal. gpu.smoke passes outside the sandbox on Apple M4."
+    "Target forward validated only for one short 22-token unpadded prompt; no long-context or batch acceptance.",
+    "No target-model LoRA/training, gradient or D5 recovery acceptance; mixed BF16 kernel is forward-only.",
+    "Native/reference share the MLX backend and the attributed GDN component; no independent-backend claim.",
+    "BF16 full versus chunked logits drift by about 1.66%-1.68%; native/reference same-mode and drift differences are zero, not bitwise cross-mode equivalence.",
+    "Single observed timing/MLX peak/RSS values do not establish optimization gains or full workload resource bounds.",
+    "Static boundary checks do not prove arbitrary runtime path safety; native probe direct dependencies contain MLX/system libraries, not Python.",
+    "Dataset automatic checks do not establish semantic labeling or model quality; independent review remains pending.",
+    "Disk preflight is a snapshot, not a reservation. Phase du measurement is not a new CLI project-usage feature.",
+    "Process-crash/partial-write tests do not cover power loss or all hardware faults.",
+    "The sandbox cannot access Metal; GPU checks pass outside it on Apple M4."
   ],
   "review": {
     "status_document": "docs/status.md",
     "method": "Manual identity, coverage and sufficiency review; project.docs checks navigation only",
-    "hash_scope": "All files under cmake, src, tests, configs, fixtures, third_party except __pycache__, plus root CMakeLists.txt, pyproject.toml, uv.lock and .python-version. Formal docs and evidence excluded to avoid self-reference.",
-    "result": "Full CTest passed 19/19 outside the sandbox with Metal access; pending entry pauses preserve committed progress without an update, four real-child failure regressions verify driver cleanup, and synthetic continuous/pause/new-process-resume state matches exactly. No target-model training acceptance. Dataset independent review remains pending.",
+    "hash_scope": "All files under cmake, src, tests, tools, configs, fixtures, third_party except __pycache__, plus root CMakeLists.txt, pyproject.toml, uv.lock and .python-version. Formal docs and evidence excluded to avoid self-reference.",
+    "result": "Full CTest 24/24 passed after separating numerical tooling from acceptance tests. model.reference invokes the independent tool on a fixed design scenario and checks input/mode/layer/cache/threshold/output coverage. Independently, BUILD_TESTING=OFF builds the tools with zero registered tests and a different 23-token request passed all 229 tensor comparisons. Dataset independent review remains pending.",
     "documentation_scope": [
       "README.md",
       "AGENTS.md",
       "docs/*.md"
-    ]
+    ],
+    "commit_preparation": {
+      "source_format_change": "tools/numerical_validation/qwen35/process.py",
+      "change": "Removed extra blank line at EOF; Python AST unchanged. Existing behavioral validation retained.",
+      "before_sha256": "e14002ac23ff4bec513b8714b92bf44889d78573de066a8be4f00907cb13e245",
+      "after_sha256": "5853f9f13f6994dc6eda17c893e131f5c2dc3f46910f2b25c648afba0c6d8dbb",
+      "upstream_license": "Original Qwen fixture LICENSE retains upstream CRLF bytes; whitespace check treats CR at EOL as a line ending."
+    }
   },
   "raw_report": "runs/d2/build/ctest-current.xml",
   "documentation_validation": {
-    "verified_at": "2026-10-26T19:42:00+08:00",
+    "verified_at": "2026-10-27T16:06:46+08:00",
     "status": "passed",
     "scope": [
       "Formal Markdown links, anchors and index",
       "Learning, fixture and dependency Markdown local links and anchors"
     ],
-    "source_identity_check": "Current source inventory and hashes refreshed including the new cleanup test; project.docs passed in the current 19-test run outside the sandbox.",
-    "change": "Keep resource-policy.md focused on settled rules; document lightweight volume-only preflight and simple checkpoint write session.",
+    "source_identity_check": "Inventory covers moved/deleted/new tool and acceptance sources; full CTest passed and docs rechecked after edits.",
+    "change": "Separated development numerical capability from acceptance tests; updated commands, build independence and source/artifact retention.",
     "commands": [
       ".venv/bin/python tests/checks/check_project.py docs --root ."
     ],
-    "supplement": "Learning, fixture and dependency links checked by an ad hoc script with existing helpers; not registered as CTest checks."
+    "supplement": "16 learning/tool/fixture Markdown files local links and anchors passed; ad hoc check, not registered CTest.",
+    "tool_relocation": {
+      "verified_at": "2026-10-27T15:55:26+08:00",
+      "formal_docs": "passed after final edits",
+      "supplement": "13 learning/tool Markdown files local links and anchors passed; ad hoc check, not registered CTest."
+    }
   },
   "task_contract_validation": {
     "fixture": "fixtures/task_contract.json",
@@ -501,8 +577,8 @@
     "real_project_snapshot": {
       "allocated_bytes": null,
       "allowed": true,
-      "available_bytes": 58521890816,
-      "max_growth_bytes": 26309636096,
+      "available_bytes": 33672073216,
+      "max_growth_bytes": 1459818496,
       "operation": "read_only_resource_preflight",
       "policy": {
         "min_free_bytes": 32212254720,
@@ -515,8 +591,8 @@
       "reservation_created": false,
       "warning": false
     },
-    "real_project_report": "runs/d2/resource-lightweight-current.json",
-    "command": "./runs/d2/build/pitfall-lab resources --root \"$PWD\" --config configs/resources.toml --peak-bytes 0",
+    "real_project_report": "runs/d4/current-resources.json",
+    "command": "./runs/d2/build/pitfall-lab resources --root PROJECT --config configs/resources.toml --peak-bytes 0",
     "red_phase": {
       "missing_api_log": "runs/d2/red-build.log",
       "missing_api_log_sha256": "e5a50fc19c55273a3a7a4f68e8160b7bb887939c40b7d414dc638f9ec4643572",
@@ -589,5 +665,706 @@
       "Container tests alone do not establish training recovery; no power-loss or all hardware-fault acceptance.",
       "Interrupted writes may leave pending directories; they are not resumed or automatically removed."
     ]
+  },
+  "d4_model_validation": {
+    "status": "short_text_forward_verified",
+    "verified_at": "2026-10-27T16:06:46+08:00",
+    "repository": "Qwen/Qwen3.5-4B",
+    "source_revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+    "artifact_directory": "runs/models/qwen35-4b-text-4bit",
+    "artifact_manifest_sha256": "a4fbcefc2262ae474a3ead3ecbe9ca14bccb6b2b82f247d134e128e4e1029978",
+    "conversion": {
+      "mlx": "0.32.4",
+      "mlx_lm": "0.32.2",
+      "bits": 4,
+      "group_size": 64,
+      "mode": "affine",
+      "dtype": "bfloat16"
+    },
+    "excluded_components": [
+      "vision",
+      "mtp"
+    ],
+    "source_files": {
+      "chat_template.jinja": {
+        "bytes": 7756,
+        "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+      },
+      "LICENSE": {
+        "bytes": 11544,
+        "sha256": "bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a"
+      },
+      "config.json": {
+        "bytes": 3161,
+        "sha256": "ddc63e1c717afa86c865bb5e01313d89d72bb53b97ad4a8a03ba8510c0621670"
+      },
+      "merges.txt": {
+        "bytes": 3353259,
+        "sha256": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d"
+      },
+      "model.safetensors-00001-of-00002.safetensors": {
+        "bytes": 5329398688,
+        "sha256": "26a93f066e1916adb13453dae5a0c707c0fbc71299ed98779571a907b8e74c61"
+      },
+      "model.safetensors.index.json": {
+        "bytes": 76196,
+        "sha256": "cf3f798ee02ba45f9622aa8892a47369ab667d0afbf154ee7c2212de42e6302d"
+      },
+      "tokenizer.json": {
+        "bytes": 12807982,
+        "sha256": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42"
+      },
+      "tokenizer_config.json": {
+        "bytes": 16710,
+        "sha256": "316230d6a809701f4db5ea8f8fc862bc3a6f3229c937c174e674ff3ca0a64ac8"
+      },
+      "vocab.json": {
+        "bytes": 6722759,
+        "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
+      },
+      "model.safetensors-00002-of-00002.safetensors": {
+        "bytes": 3990429408,
+        "sha256": "cb544bd9bfae93dc59b0f22b292f5933573854a7f9b97835c67060d7d910e188"
+      }
+    },
+    "artifact_files": {
+      "LICENSE": {
+        "bytes": 11544,
+        "sha256": "bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a"
+      },
+      "chat_template.jinja": {
+        "bytes": 7756,
+        "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+      },
+      "config.json": {
+        "bytes": 2437,
+        "sha256": "dd812bbff28eee02f231794b65aa2b0687cc825fe595cb01c9b8992506013df8"
+      },
+      "merges.txt": {
+        "bytes": 3353259,
+        "sha256": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d"
+      },
+      "model.safetensors": {
+        "bytes": 2367244781,
+        "sha256": "6626ef65bc697df9217e91372430cef39772ffda804f37f9825e453b15c2414a"
+      },
+      "model.safetensors.index.json": {
+        "bytes": 81008,
+        "sha256": "bedb8a543e5b510447d4e91d268eeac6a154cc1d2dd0c7542593419e59ec8310"
+      },
+      "tokenizer.json": {
+        "bytes": 12807982,
+        "sha256": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42"
+      },
+      "tokenizer_config.json": {
+        "bytes": 16710,
+        "sha256": "316230d6a809701f4db5ea8f8fc862bc3a6f3229c937c174e674ff3ca0a64ac8"
+      },
+      "vocab.json": {
+        "bytes": 6722759,
+        "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
+      }
+    },
+    "artifact_file_bytes": 2390248236,
+    "tensor_bytes": 2367124992,
+    "tensor_count": 924,
+    "conversion_mlx_peak_bytes": 3504751518,
+    "reference_source": {
+      "package": "mlx-lm==0.32.2",
+      "python_files": 202,
+      "source_inventory_sha256": "2e0560345c6d9322b883a9c4eb53d61521b5f258a9e593bad4f240f40a358184",
+      "selected_module_sha256": {
+        "mlx_lm/models/activations.py": "6f7d756897deb322af4fe98e040df76e9358a91d76521e51f14d734fdd0fb05f",
+        "mlx_lm/models/base.py": "63d8e58a4b6f8c0902719499c693647fbf486bbd5d22b09868a07d37e08c83d6",
+        "mlx_lm/models/cache.py": "c96cb169fd5e0ec4584a162dd61dc62ab08ccdca03a9850f8a491ce6809145e6",
+        "mlx_lm/models/gated_delta.py": "f69e837ea68641dbb06fdb5dcc024a9a7e1d9353f08ae58c05275253a0c39428",
+        "mlx_lm/models/qwen3_5.py": "851449fd9989d6bf4b3c4fed92ddc3be5f1e781eb2246f89c54d7eff2518d9c6",
+        "mlx_lm/models/qwen3_next.py": "67ca08a4d08cb7be124965e95399735e556f1eaeb21a16bc23cb88d1ac035e11",
+        "mlx_lm/models/rope_utils.py": "06466d57dfe1ccc1e61ba595c0a8f2dd3a14bcb5c6a1d06c67591dc03128606b",
+        "mlx_lm/utils.py": "2803ff8d2298b0854797d78b16387c394801d16c57bfb30cf42ac4efbdee2873"
+      },
+      "identity_check": "Selected model/GDN/activation files match the installed wheel RECORD; version pinned in uv.lock."
+    },
+    "input": {
+      "messages": [
+        {
+          "role": "user",
+          "content": "请只输出数字：一加一等于几？"
+        }
+      ],
+      "rendered": "<|im_start|>user\n请只输出数字：一加一等于几？<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+      "token_ids": [
+        248045,
+        846,
+        198,
+        96220,
+        96227,
+        100627,
+        99129,
+        4960,
+        137945,
+        95744,
+        102149,
+        96370,
+        10992,
+        248046,
+        198,
+        248045,
+        74455,
+        198,
+        248068,
+        271,
+        248069,
+        271
+      ]
+    },
+    "tolerances": {
+      "scaled_rmse": 0.01,
+      "max_logit_absolute_error": 0.5,
+      "greedy_token_ids": "exact across workers/modes",
+      "shapes_and_dtypes": "exact",
+      "cross_mode": "report raw BF16 drift; compare native drift against reference drift with the same numerical tolerances"
+    },
+    "modes": {
+      "0": {
+        "tensor_comparisons": 99,
+        "max_absolute_error": 0.0,
+        "max_scaled_rmse": 0.0,
+        "native": {
+          "chunk": 0,
+          "device": "Apple M4",
+          "final_offset": 23,
+          "generated": [
+            17,
+            248046
+          ],
+          "input_tokens": 22,
+          "max_rss_bytes": 2462990336,
+          "mlx_peak_bytes": 2490424266,
+          "prefill_seconds": 1.142308583,
+          "total_seconds": 2.3077975
+        },
+        "reference": {
+          "reference": "mlx-lm==0.32.2",
+          "gdn_packed": "1",
+          "chunk": 0,
+          "input_tokens": 22,
+          "prefill_seconds": 0.31430054106749594,
+          "total_seconds": 1.2184386670123786,
+          "mlx_peak_bytes": 2555051322,
+          "max_rss_bytes": 1397309440,
+          "generated": [
+            17,
+            248046
+          ]
+        }
+      },
+      "1": {
+        "tensor_comparisons": 65,
+        "max_absolute_error": 0.0,
+        "max_scaled_rmse": 0.0,
+        "native": {
+          "chunk": 1,
+          "device": "Apple M4",
+          "final_offset": 23,
+          "generated": [
+            17,
+            248046
+          ],
+          "input_tokens": 22,
+          "max_rss_bytes": 2467004416,
+          "mlx_peak_bytes": 2498158874,
+          "prefill_seconds": 0.818547375,
+          "total_seconds": 1.8782235
+        },
+        "reference": {
+          "reference": "mlx-lm==0.32.2",
+          "gdn_packed": "1",
+          "chunk": 1,
+          "input_tokens": 22,
+          "prefill_seconds": 0.6998437498696148,
+          "total_seconds": 0.8944534161128104,
+          "mlx_peak_bytes": 2513353510,
+          "max_rss_bytes": 2538422272,
+          "generated": [
+            17,
+            248046
+          ]
+        }
+      },
+      "3": {
+        "tensor_comparisons": 65,
+        "max_absolute_error": 0.0,
+        "max_scaled_rmse": 0.0,
+        "native": {
+          "chunk": 3,
+          "device": "Apple M4",
+          "final_offset": 23,
+          "generated": [
+            17,
+            248046
+          ],
+          "input_tokens": 22,
+          "max_rss_bytes": 2466562048,
+          "mlx_peak_bytes": 2497967498,
+          "prefill_seconds": 0.375652041,
+          "total_seconds": 1.350480792
+        },
+        "reference": {
+          "reference": "mlx-lm==0.32.2",
+          "gdn_packed": "1",
+          "chunk": 3,
+          "input_tokens": 22,
+          "prefill_seconds": 0.30974341719411314,
+          "total_seconds": 0.5102240422274917,
+          "mlx_peak_bytes": 2513285430,
+          "max_rss_bytes": 2535227392,
+          "generated": [
+            17,
+            248046
+          ]
+        }
+      }
+    },
+    "same_mode_tensor_comparisons": 229,
+    "same_mode_max_error": 0,
+    "cross_mode_logits": {
+      "1": {
+        "native_raw_drift": {
+          "max_absolute_error": 0.5625,
+          "scaled_rmse": 0.016816463136421805
+        },
+        "reference_raw_drift": {
+          "max_absolute_error": 0.5625,
+          "scaled_rmse": 0.016816463136421805
+        },
+        "drift_difference": {
+          "max_absolute_error": 0.0,
+          "scaled_rmse": 0.0
+        }
+      },
+      "3": {
+        "native_raw_drift": {
+          "max_absolute_error": 0.5078125,
+          "scaled_rmse": 0.016641380913545473
+        },
+        "reference_raw_drift": {
+          "max_absolute_error": 0.5078125,
+          "scaled_rmse": 0.016641380913545473
+        },
+        "drift_difference": {
+          "max_absolute_error": 0.0,
+          "scaled_rmse": 0.0
+        }
+      }
+    },
+    "all_cache_drift_differences_zero": true,
+    "generated_token_ids": [
+      17,
+      248046
+    ],
+    "decoded_generation": "2<|im_end|>",
+    "worker_lifecycle": "All six model workers returned success and were reaped before subsequent workers; no model process left paused in memory.",
+    "preflight": {
+      "allocated_bytes": null,
+      "allowed": true,
+      "available_bytes": 33690279936,
+      "max_growth_bytes": 1478025216,
+      "operation": "read_only_resource_preflight",
+      "policy": {
+        "min_free_bytes": 32212254720,
+        "project_limit_bytes": 21474836480,
+        "warning_bytes": 19327352832
+      },
+      "project_usage_measured": false,
+      "reason": "volume_peak_within_floor_project_usage_unknown",
+      "requested_peak_bytes": 1073741824,
+      "reservation_created": false,
+      "warning": false
+    },
+    "raw_report": "runs/d2/build/model-reference.json",
+    "raw_report_sha256": "0da5b80441e0b95e89fcfe5385efa03fb7bbd4b583fc47918f9f51c3c191a213",
+    "diagnosis": {
+      "native_bf16_gate_case": {
+        "expected_state": 0.874625,
+        "unadapted_sdk_max_state_error": 0.000375032,
+        "formal_max_state_error": 0,
+        "bf16_outputs_equal_despite_state_error": true
+      },
+      "initial_float32_promotion": {
+        "first_layer_scaled_rmse": 0.0002915409681996794,
+        "final_hidden_scaled_rmse": 0.019426896164794726,
+        "logits_scaled_rmse": 0.014641052257413092,
+        "logits_max_error": 0.5
+      },
+      "layer0_observation": "All inputs through normalized q/k, convolution, decay and beta equal; first raw GDN output max error 1.9073486328125e-6.",
+      "packed_layout_diagnostic": "Changing the reference packed flag alone did not alter the model discrepancy; not used as acceptance fallback.",
+      "adjustment": "Keep float32 native route; use MIT-attributed reference mixed-precision forward via MLX C++ Metal interface for BF16. Full-sequence model tensors then match exactly.",
+      "comparison_design": "Measured reference intrinsic BF16 chunk drift; retain original limits for same-mode cross-language errors and for the difference between native/reference drift. Raw mode drift is reported, not relabeled as under the same-mode limit."
+    },
+    "limits": [
+      "One 22-token unpadded text prompt, three chunking modes; not a task quality dataset.",
+      "No long-context, batched or target-training acceptance; BF16 kernel backward not implemented.",
+      "Native/reference share MLX and the attributed GDN component; this is not independent-backend proof.",
+      "Timing is single-run with observations and different load/hash work, not a performance comparison.",
+      "Download helper evolved during preparation; final range/resume refactor covered by offline tests, not a fresh end-to-end network download of the final script. Final source provenance established through fixed-revision remote checksums."
+    ],
+    "native_direct_dependencies": [
+      "\t@rpath/libmlx.dylib (compatibility version 0.0.0, current version 0.0.0)",
+      "\t/System/Library/Frameworks/Metal.framework/Versions/A/Metal (compatibility version 1.0.0, current version 368.12.0)",
+      "\t/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (compatibility version 300.0.0, current version 3502.1.255)",
+      "\t/System/Library/Frameworks/QuartzCore.framework/Versions/A/QuartzCore (compatibility version 1.2.0, current version 1.11.0)",
+      "\t/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate (compatibility version 1.0.0, current version 4.0.0)",
+      "\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 1900.180.0)",
+      "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)"
+    ],
+    "conversion_reproduction": {
+      "status": "passed",
+      "method": "verified SHA-256 and byte lengths of all listed files before comparison",
+      "baseline_manifest_sha256": "a4fbcefc2262ae474a3ead3ecbe9ca14bccb6b2b82f247d134e128e4e1029978",
+      "candidate_manifest_sha256": "24f04c50c95d03003060f3a5b6cb34323a5296b600aa70ae16c5c0ac11919b98",
+      "identical_payload_files": [
+        "model.safetensors",
+        "model.safetensors.index.json",
+        "config.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "chat_template.jinja",
+        "merges.txt",
+        "vocab.json",
+        "LICENSE"
+      ],
+      "additional_provenance_files": [
+        "conversion-audit.json",
+        "conversion-recipe.json",
+        "converter-identity.json"
+      ],
+      "scope": "byte-exact model weights, index, config and auxiliary payloads in this pinned environment; provenance manifests intentionally differ",
+      "verified_at": "2026-10-27T15:26:56+08:00",
+      "report": "runs/d4/conversion-reproduction.json",
+      "report_sha256": "137c15c2f135d8ee8eb48bc42eacfb2f6aeec6a0d618bce7d8920292f1a10ae6",
+      "candidate_directory": "runs/models/qwen35-4b-text-4bit-repro",
+      "recipe": "tools/model_artifacts/qwen35/qwen35_conversion_rules.json",
+      "recipe_sha256": "ecf8ecec8872b7a00d7ad518999173090d419c3fa01a13621960795bdbfacb5d",
+      "converter_identity": {
+        "packages": {
+          "mlx": "0.32.4",
+          "mlx-lm": "0.32.2"
+        },
+        "critical_files": [
+          {
+            "package": "mlx-lm",
+            "path": "mlx_lm/models/qwen3_5.py",
+            "sha256": "851449fd9989d6bf4b3c4fed92ddc3be5f1e781eb2246f89c54d7eff2518d9c6"
+          },
+          {
+            "package": "mlx-lm",
+            "path": "mlx_lm/utils.py",
+            "sha256": "2803ff8d2298b0854797d78b16387c394801d16c57bfb30cf42ac4efbdee2873"
+          },
+          {
+            "package": "mlx",
+            "path": "mlx/nn/layers/quantized.py",
+            "sha256": "8ca4574a212f14cbec4c446826474583ef0bf1e2cb1630574fd730c77af03b33"
+          },
+          {
+            "package": "mlx",
+            "path": "mlx/lib/libmlx.dylib",
+            "sha256": "bbe4ee5ab0a23bb4a95c6c5ee9ddc7520abbfbdd64615ee9fbb3ad218d44786b"
+          },
+          {
+            "package": "mlx",
+            "path": "mlx/lib/mlx.metallib",
+            "sha256": "f36b01c44dd5f2d9020deb1ac6ad53dc085de81af19396694c5963ef3a12137f"
+          }
+        ],
+        "python": "3.12.13",
+        "platform": "macOS-15.7.3-arm64-arm-64bit",
+        "recipe_id": "qwen35-4b-text-affine4-g64-v1",
+        "recipe_sha256": "ecf8ecec8872b7a00d7ad518999173090d419c3fa01a13621960795bdbfacb5d",
+        "project_sources": {
+          "qwen35_conversion.py": "27c6c9b63d555bda8242a8ce934713f891a0425597be7133ac0306e054a7eac1",
+          "prepare_qwen35.py": "46477cd1584b53d79f75b271fa24b33f5d7e5be35e7314eea0e095004835b6dd"
+        }
+      },
+      "audit_sha256": "411a4f81ede568f0acbb56a0a6d18d685811d8591b62bd84fbe85847977ff2df",
+      "sanitization": {
+        "retained": 426,
+        "dropped": {
+          "vision": 297,
+          "mtp": 15
+        },
+        "operations": {
+          "rename_prefix": 426,
+          "norm_weight_plus_one": 81,
+          "moveaxis_2_to_1": 24
+        }
+      },
+      "quantization": {
+        "quantized_matrices": 249,
+        "output_tensors": 924
+      },
+      "source_files_rechecked_before_and_after": true,
+      "mlx_peak_bytes": 3557883784,
+      "registered_test": {
+        "name": "conversion.rules",
+        "unit_cases": 7,
+        "status": "passed"
+      },
+      "active_artifact_replaced": false,
+      "retention": {
+        "candidate_directory_exists": false,
+        "reason": "Generated redundant reproduction copy removed after preserving provenance receipts to restore volume free-space floor; original source and active artifact retained.",
+        "receipt_directory": "runs/d4/reproduction-receipts",
+        "receipt_files_sha256": {
+          "artifact.json": "24f04c50c95d03003060f3a5b6cb34323a5296b600aa70ae16c5c0ac11919b98",
+          "conversion-audit.json": "411a4f81ede568f0acbb56a0a6d18d685811d8591b62bd84fbe85847977ff2df",
+          "conversion-recipe.json": "ecf8ecec8872b7a00d7ad518999173090d419c3fa01a13621960795bdbfacb5d",
+          "converter-identity.json": "c0294fe374f3a885479c7d0e0ac9bab3dfc1d1fe708ce33176bb367f1f46575e"
+        },
+        "cleanup_verified_at": "2026-10-27T16:06:46+08:00"
+      }
+    }
+  },
+  "phase_resource_measurement": {
+    "verified_at": "2026-10-27T16:06:46+08:00",
+    "method": "du -sk . (allocated KiB), includes environments/caches/raw source/artifact/diagnostics within repository; extra_owned_paths empty",
+    "project_allocated_bytes": 13410897920,
+    "project_usage_is_phase_measurement_not_cli_feature": true,
+    "volume_preflight": {
+      "allocated_bytes": null,
+      "allowed": true,
+      "available_bytes": 33672073216,
+      "max_growth_bytes": 1459818496,
+      "operation": "read_only_resource_preflight",
+      "policy": {
+        "min_free_bytes": 32212254720,
+        "project_limit_bytes": 21474836480,
+        "warning_bytes": 19327352832
+      },
+      "project_usage_measured": false,
+      "reason": "volume_peak_within_floor_project_usage_unknown",
+      "requested_peak_bytes": 0,
+      "reservation_created": false,
+      "warning": false
+    }
+  },
+  "tool_relocation": {
+    "verified_at": "2026-10-27T15:55:26+08:00",
+    "files": [
+      {
+        "old": "tests/reference/prepare_qwen35.py",
+        "new": "tools/model_artifacts/qwen35/prepare_qwen35.py",
+        "sha256": "46477cd1584b53d79f75b271fa24b33f5d7e5be35e7314eea0e095004835b6dd"
+      },
+      {
+        "old": "tests/reference/qwen35_conversion.py",
+        "new": "tools/model_artifacts/qwen35/qwen35_conversion.py",
+        "sha256": "27c6c9b63d555bda8242a8ce934713f891a0425597be7133ac0306e054a7eac1"
+      },
+      {
+        "old": "tests/reference/qwen35_conversion_rules.json",
+        "new": "tools/model_artifacts/qwen35/qwen35_conversion_rules.json",
+        "sha256": "ecf8ecec8872b7a00d7ad518999173090d419c3fa01a13621960795bdbfacb5d"
+      },
+      {
+        "old": "tests/reference/verify_qwen35_reproduction.py",
+        "new": "tools/model_artifacts/qwen35/verify_qwen35_reproduction.py",
+        "sha256": "d646c4b3867e1cd5a5df4bbeafd55f781bc2c5e9869b2ee3a79760a732c6e253"
+      }
+    ],
+    "file_contents_unchanged": true,
+    "current_tool_directory": "tools/model_artifacts/qwen35",
+    "ctest_command": "ctest --test-dir runs/d2/build -R '^(checks.model_preparation|conversion.rules|project.docs)$' --output-on-failure --output-junit ctest-tool-relocation.xml (outside sandbox; Metal accessible)",
+    "ctest_tests": [
+      {
+        "name": "project.docs",
+        "status": "passed",
+        "output": "PASS: docs"
+      },
+      {
+        "name": "checks.model_preparation",
+        "status": "passed",
+        "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.162s\n\nOK"
+      },
+      {
+        "name": "conversion.rules",
+        "status": "passed",
+        "output": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.176s\n\nOK"
+      }
+    ],
+    "ctest_report": "runs/d2/build/ctest-tool-relocation.xml",
+    "ctest_report_sha256": "d1ccdfa7e1584745b07debe0128a608eb0510af0cd13eb5c5f9ae22fa6ab3423",
+    "comparison_command": ".venv/bin/python tools/model_artifacts/qwen35/verify_qwen35_reproduction.py --baseline runs/models/qwen35-4b-text-4bit --candidate runs/models/qwen35-4b-text-4bit-repro --report runs/d4/conversion-reproduction-relocated.json",
+    "comparison": {
+      "status": "passed",
+      "method": "verified SHA-256 and byte lengths of all listed files before comparison",
+      "baseline_manifest_sha256": "a4fbcefc2262ae474a3ead3ecbe9ca14bccb6b2b82f247d134e128e4e1029978",
+      "candidate_manifest_sha256": "24f04c50c95d03003060f3a5b6cb34323a5296b600aa70ae16c5c0ac11919b98",
+      "identical_payload_files": [
+        "model.safetensors",
+        "model.safetensors.index.json",
+        "config.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "chat_template.jinja",
+        "merges.txt",
+        "vocab.json",
+        "LICENSE"
+      ],
+      "additional_provenance_files": [
+        "conversion-audit.json",
+        "conversion-recipe.json",
+        "converter-identity.json"
+      ],
+      "scope": "byte-exact model weights, index, config and auxiliary payloads in this pinned environment; provenance manifests intentionally differ"
+    },
+    "comparison_report": "runs/d4/conversion-reproduction-relocated.json",
+    "comparison_report_sha256": "137c15c2f135d8ee8eb48bc42eacfb2f6aeec6a0d618bce7d8920292f1a10ae6",
+    "cli_help": "prepare_qwen35.py --help passed at new path",
+    "preserved_evidence": "Previous full 24-test suite, complete conversion and target model numerical results retain their original verification times. Four tool/recipe files are byte-identical after relocation; only test import paths and documentation changed. No fresh network download, conversion or model forward was run. Existing artifact receipts are not rewritten."
+  },
+  "numerical_tool_separation": {
+    "verified_at": "2026-10-27T16:06:46+08:00",
+    "tool_directory": "tools/numerical_validation/qwen35",
+    "acceptance_test": "tests/model/test_qwen35_comparison.py",
+    "fixture": "fixtures/qwen35-4b/numerical-input.json",
+    "tests_imported_by_tools": false,
+    "no_tests_build": {
+      "directory": "runs/d4/no-tests-build",
+      "BUILD_TESTING": "OFF",
+      "registered_tests": 0,
+      "built_targets": [
+        "lab_qwen35_probe",
+        "pitfall-lab"
+      ],
+      "probe_sha256": "fe217e82fd3873ef87fef0e9602d43d78e44a8250968dad3130df888357e6d88",
+      "configure": "cmake -S . -B runs/d4/no-tests-build -DBUILD_TESTING=OFF -DPython3_EXECUTABLE=PROJECT/.venv/bin/python -DLAB_MLX_ROOT=PROJECT/.venv/lib/python3.12/site-packages/mlx",
+      "build": "cmake --build runs/d4/no-tests-build --target lab_qwen35_probe pitfall-lab -j 2"
+    },
+    "standalone": {
+      "report": "runs/d4/standalone-comparison.json",
+      "report_sha256": "d313adb1f1af0078886ba38ea5a0e486788587c130a29fb7dc21dfcc12be475e",
+      "input": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "请只输出数字：二加二等于几？"
+          }
+        ],
+        "rendered": "<|im_start|>user\n请只输出数字：二加二等于几？<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+        "token_ids": [
+          248045,
+          846,
+          198,
+          96220,
+          96227,
+          100627,
+          99129,
+          4960,
+          96053,
+          95984,
+          96053,
+          102149,
+          96370,
+          10992,
+          248046,
+          198,
+          248045,
+          74455,
+          198,
+          248068,
+          271,
+          248069,
+          271
+        ]
+      },
+      "status": "passed",
+      "tensor_comparisons": 229,
+      "max_absolute_error": 0.0,
+      "max_scaled_rmse": 0.0,
+      "native_workers": {
+        "0": {
+          "chunk": 0,
+          "device": "Apple M4",
+          "final_offset": 24,
+          "generated": [
+            19,
+            248046
+          ],
+          "input_tokens": 23,
+          "max_rss_bytes": 2468888576,
+          "mlx_peak_bytes": 2491515153,
+          "prefill_seconds": 0.944642125,
+          "total_seconds": 1.937866958
+        },
+        "1": {
+          "chunk": 1,
+          "device": "Apple M4",
+          "final_offset": 24,
+          "generated": [
+            19,
+            248046
+          ],
+          "input_tokens": 23,
+          "max_rss_bytes": 2469134336,
+          "mlx_peak_bytes": 2499195162,
+          "prefill_seconds": 0.802816166,
+          "total_seconds": 1.825341375
+        },
+        "3": {
+          "chunk": 3,
+          "device": "Apple M4",
+          "final_offset": 24,
+          "generated": [
+            19,
+            248046
+          ],
+          "input_tokens": 23,
+          "max_rss_bytes": 2468331520,
+          "mlx_peak_bytes": 2498551738,
+          "prefill_seconds": 0.415633875,
+          "total_seconds": 1.403603167
+        }
+      },
+      "cross_mode_logits": {
+        "1": {
+          "native_raw_drift": {
+            "max_absolute_error": 0.5,
+            "scaled_rmse": 0.01712444816757882
+          },
+          "reference_raw_drift": {
+            "max_absolute_error": 0.5,
+            "scaled_rmse": 0.01712444816757882
+          },
+          "drift_difference": {
+            "max_absolute_error": 0.0,
+            "scaled_rmse": 0.0
+          }
+        },
+        "3": {
+          "native_raw_drift": {
+            "max_absolute_error": 0.4609375,
+            "scaled_rmse": 0.0161108796957548
+          },
+          "reference_raw_drift": {
+            "max_absolute_error": 0.4609375,
+            "scaled_rmse": 0.0161108796957548
+          },
+          "drift_difference": {
+            "max_absolute_error": 0.0,
+            "scaled_rmse": 0.0
+          }
+        }
+      },
+      "scope": "Separate non-CTest invocation using tools built with tests disabled and a different text input; no long-context or training acceptance."
+    },
+    "resource_rejection": {
+      "phase": "initial full-suite attempt, before loading models",
+      "available_bytes": 31321858048,
+      "min_free_bytes": 32212254720,
+      "reason": "volume_free_floor_already_violated",
+      "action": "Preserved four provenance receipt files and removed only the generated redundant reproduction copy; re-preflight allowed 1 GiB peak. Resource floor unchanged."
+    }
   }
 }

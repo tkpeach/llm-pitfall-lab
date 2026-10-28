@@ -19,6 +19,7 @@ lab_find_mlx()
 
 configure_file(cmake/build_info.hpp.in generated/lab_build_info.hpp @ONLY)
 add_subdirectory(src)
+add_subdirectory(tools)
 
 include(CTest)
 if(BUILD_TESTING)

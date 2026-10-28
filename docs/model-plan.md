@@ -19,9 +19,11 @@
 - 4B：`851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a`
 - 9B：`c202236235762e1c871ad0ccb60c8ee5ba337b9a`
 
-来源：[4B 固定配置](https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/config.json)、[9B 固定配置](https://huggingface.co/Qwen/Qwen3.5-9B/blob/c202236235762e1c871ad0ccb60c8ee5ba337b9a/config.json)。它们是已核对身份，不表示已下载、加载或完成验证。
+来源：[4B 固定配置](https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/config.json)、[9B 固定配置](https://huggingface.co/Qwen/Qwen3.5-9B/blob/c202236235762e1c871ad0ccb60c8ee5ba337b9a/config.json)。4B 源已按该 revision 下载并核验，语言执行产物通过短验证；9B 尚未下载或验收。
 
 执行产物验收须锁定量化方式、转换来源与 revision、语言/视觉组件处理、tokenizer/模板及必要校验信息。只有通过身份和内容核验的产物才能进入正式加载与基线测量；固定逻辑模型身份不等于执行产物已验收。
+
+当前 4B 执行产物由固定 MLX-LM 0.32.2 / MLX 0.32.4 从上述官方源转换：仅语言部分，排除视觉与 MTP，affine 4-bit / group size 64，保留原始未量化参数 dtype，使用同 revision 的 tokenizer 与模板。`artifact.json` SHA-256 为 `a4fbcefc2262ae474a3ead3ecbe9ca14bccb6b2b82f247d134e128e4e1029978`；清单记录源与执行文件摘要。准备、执行和短验证规则见 [固定目标模型短验证](model-validation.md)，当前实测边界见 [仓库现状](status.md)。
 
 ## 迁移与验收边界
 
