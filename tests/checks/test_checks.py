@@ -15,6 +15,9 @@ class RepositoryChecks(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         (self.root / "docs").mkdir()
+        (self.root / "decisions").mkdir()
+        (self.root / "decisions/README.md").write_text("# 决策\n[记录](0001-choice.md)\n")
+        (self.root / "decisions/0001-choice.md").write_text("# 决策\n决策状态：已确认\n实施状态：未实施\n决策日期：未知\n当前规范：[设计](../docs/design.md)\n后继：无\n## 问题与背景\n## 决定\n## 考虑过的方案\n## 依据与不确定性\n## 后果与重新评估条件\n")
         (self.root / "README.md").write_text("[入口](docs/README.md)\n")
         (self.root / "AGENTS.md").write_text("# Instructions\n")
         (self.root / "docs/README.md").write_text("# 文档入口\n[设计](design.md#边界)\n")
@@ -36,6 +39,29 @@ class RepositoryChecks(unittest.TestCase):
     def test_unindexed_document_is_rejected(self):
         (self.root / "docs/unindexed.md").write_text("# Missing\n")
         with self.assertRaisesRegex(ValueError, "missing from"):
+            check_docs(self.root)
+
+    def test_decision_missing_section_is_rejected(self):
+        path = self.root / "decisions/0001-choice.md"
+        path.write_text(path.read_text().replace("## 考虑过的方案\n", ""))
+        with self.assertRaisesRegex(ValueError, "missing decision section"):
+            check_docs(self.root)
+
+    def test_superseded_decision_requires_successor(self):
+        path = self.root / "decisions/0001-choice.md"
+        path.write_text(path.read_text().replace("决策状态：已确认", "决策状态：已取代"))
+        with self.assertRaisesRegex(ValueError, "missing decision successor"):
+            check_docs(self.root)
+
+    def test_duplicate_decision_number_is_rejected(self):
+        path = self.root / "decisions/0001-other.md"
+        path.write_text((self.root / "decisions/0001-choice.md").read_text())
+        with self.assertRaisesRegex(ValueError, "duplicate decision"):
+            check_docs(self.root)
+
+    def test_unindexed_decision_is_rejected(self):
+        (self.root / "decisions/README.md").write_text("# 决策\n")
+        with self.assertRaisesRegex(ValueError, "decision missing from index"):
             check_docs(self.root)
 
     def test_research_source_and_include_paths_are_rejected(self):

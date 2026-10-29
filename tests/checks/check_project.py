@@ -27,11 +27,15 @@ def heading_ids(text: str):
 def check_docs(root: Path):
     root = root.resolve()
     index = root / "docs/README.md"
-    files = [root / "README.md", root / "AGENTS.md", *sorted((root / "docs").glob("*.md"))]
-    for required in (root / "README.md", root / "AGENTS.md", index):
+    decision_dir = root / "decisions"
+    decision_index = decision_dir / "README.md"
+    decisions = sorted(decision_dir.glob("*.md"))
+    files = [root / "README.md", root / "AGENTS.md", *sorted((root / "docs").glob("*.md")), *decisions]
+    for required in (root / "README.md", root / "AGENTS.md", index, decision_index):
         if not required.is_file():
             raise ValueError(f"missing documentation entry: {required}")
     indexed = set()
+    decision_indexed = set()
     for file in files:
         for target in markdown_targets(file.read_text()):
             url = urlsplit(target)
@@ -44,6 +48,36 @@ def check_docs(root: Path):
                 raise ValueError(f"missing heading: {file.relative_to(root)} -> {target}")
             if file == index:
                 indexed.add(path)
+            if file == decision_index:
+                decision_indexed.add(path)
+    numbers = set()
+    for file in decisions:
+        if file == decision_index:
+            continue
+        match = re.fullmatch(r"(\d{4})-[a-z0-9]+(?:-[a-z0-9]+)*\.md", file.name)
+        if not match or match.group(1) in numbers:
+            raise ValueError(f"invalid or duplicate decision filename: {file.name}")
+        numbers.add(match.group(1))
+        body = file.read_text()
+        states = re.findall(r"^决策状态：(.+)$", body, re.M)
+        implementations = re.findall(r"^实施状态：(.+)$", body, re.M)
+        if len(states) != 1 or states[0] not in {"提议中", "已确认", "已拒绝", "已部分取代", "已取代"}:
+            raise ValueError(f"invalid decision status: {file.name}")
+        if len(implementations) != 1 or implementations[0] not in {"未实施", "部分实施", "已实施", "不适用"}:
+            raise ValueError(f"invalid implementation status: {file.name}")
+        for field in ("决策日期：", "当前规范：", "后继："):
+            if len(re.findall(r"^" + field + r"\S.*$", body, re.M)) != 1:
+                raise ValueError(f"missing or duplicate decision field {field}: {file.name}")
+        for heading in ("问题与背景", "决定", "考虑过的方案", "依据与不确定性", "后果与重新评估条件"):
+            if f"## {heading}\n" not in body:
+                raise ValueError(f"missing decision section {heading}: {file.name}")
+        successor = re.search(r"^后继：(.+)$", body, re.M).group(1)
+        if states[0] in {"已部分取代", "已取代"}:
+            targets = markdown_targets(successor)
+            if not targets or not all((file.parent / urlsplit(t).path).resolve() in decisions and (file.parent / urlsplit(t).path).resolve() not in {file, decision_index} for t in targets):
+                raise ValueError(f"missing decision successor: {file.name}")
+        if file not in decision_indexed:
+            raise ValueError(f"decision missing from index: {file.name}")
     missing = set((root / "docs").glob("*.md")) - indexed - {index}
     if missing:
         raise ValueError(f"formal documents missing from docs/README.md: {sorted(map(str, missing))}")

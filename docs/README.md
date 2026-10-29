@@ -6,7 +6,7 @@
 
 先读取根 `AGENTS.md` 和本文件，再读仓库现状；其余文档按任务选择，涉及跨模块变更时扩展阅读相关规范。
 
-接手或快速熟悉仓库时，接着读取 [仓库现状](status.md)，核对当前能力、代码入口、证据和下一步；复习已学内容与复现问题从 [学习记录](../learning/README.html) 进入。模型讨论的通用机制、Qwen 专题与训练/验证实践由 [模型知识导读](../learning/topics/model-knowledge-guide.html) 串联。
+接手或快速熟悉仓库时，接着读取 [仓库现状](status.md)，核对当前能力、代码入口、证据和下一步；涉及长期取舍时按需阅读 [重要决策](../decisions/README.md)；复习已学内容与复现问题从 [学习记录](../learning/README.html) 进入。模型讨论的通用机制、Qwen 专题与训练/验证实践由 [模型知识导读](../learning/topics/model-knowledge-guide.html) 串联。
 
 | 序号 | 文档 | 负责回答的问题 |
 | --- | --- | --- |
@@ -44,6 +44,7 @@
 | `learning/` | 面向用户的 HTML 主题知识笔记，主要总结提问与讨论；仅收录有分量的真实问题案例，不记录 agent 操作流水 |
 | 根 `pyproject.toml`、`uv.lock`、`.python-version` | MLX C++ SDK 供应与 Python 辅助工具环境，不是正式 Python 应用 |
 | `.venv/`、`.cache/` | 本机环境和缓存，不提交 Git，占用计入项目预算 |
+| `decisions/` | 重要决策的理由、取舍与演变；不替代当前规范或验收 |
 | `research/` | 历史调研、有限机制验证及旧原型；正式运行不得导入代码、读取运行时配置或隐式依赖其环境 |
 | `runs/` | 本机构建文件、实验输入输出、报告与检查点，不提交 Git，占用计入项目预算 |
 
