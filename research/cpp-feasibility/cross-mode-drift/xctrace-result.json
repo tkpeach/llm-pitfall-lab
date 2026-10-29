@@ -1,0 +1,26 @@
+{
+  "method": "xctrace Metal System Trace; one QKV projection per independent process; shader profiler list, not dispatch event proof",
+  "shape_results": {
+    "1": {
+      "selected_output": 17.5,
+      "quantized_shader_list": [
+        "affine_qmv_fast_bfloat16_t_gs_64_b_4_batch_0_pr_0_hgs_0_r_4 (25)"
+      ]
+    },
+    "3": {
+      "selected_output": 17.5,
+      "quantized_shader_list": [
+        "affine_qmv_wide_bfloat16_t_gs_64_b_4_nv_3_kl_8_batch_0 (0)"
+      ]
+    },
+    "22": {
+      "selected_output": 17.625,
+      "quantized_shader_list": [
+        "affine_qmm_t_splitk_bfloat16_t_gs_64_b_4_alN_true (3)"
+      ]
+    }
+  },
+  "warning": "backdated signpost timestamps warning in each recording; shader profiler interval/sample tables empty in 3-token trace",
+  "source_commit_verified": false,
+  "capture_trace_paths": "runs/numerical-validation/diagnostic/metal-{1,3,22}.trace"
+}

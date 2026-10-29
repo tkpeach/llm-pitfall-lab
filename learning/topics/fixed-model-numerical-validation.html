@@ -146,27 +146,44 @@ h → RMSNorm → gated MLP      → 加回 h
 <p>KV 随已消费 token 数增长，另外两项在单请求推理中保持固定形状。实际分配还受容量预留、暂存和框架缓存影响，这个算式不是整个进程的内存峰值。训练为了反向传播可能保存中间激活或重算；不能因为推理只保留一个递推矩阵，就认为训练也只需要这份固定大小状态。</p>
 <p>“缓存正确”因此不能只表示最后生成了一段合理文字。要让相同 token 序列经过完整前向、逐 token 追加、三 token 分块追加，并比较输出与最终状态。三 token 分块还能覆盖“块内有因果关系，块前又已有历史”的情况，这是单 token decode 不会单独检验的分支。</p>
 <h2 id="3-一个已验证的小问题bf16-接口不一定保留-float32-衰减">3. 一个已验证的小问题：BF16 接口不一定保留 float32 衰减</h2>
-<h3 id="从接口检查得到假设">从接口检查得到假设</h3>
-<p>固定 SDK 的 C++ 原生 GDN 接口，会先依据 q/k dtype 转换其他输入，包括衰减系数；参考路径则保留 float32 衰减和递推状态。源码分析提示：即使最终状态为 float32，若衰减进入算子前先被舍入为 BF16，结果仍可能变化。</p>
-<p>这时不能只看“输出状态 dtype 是 float32”。精度可能在写入状态之前已经丢失，随后再转回 float32 无法恢复。</p>
-<h3 id="如何把大模型问题压缩为解析小算例">如何把大模型问题压缩为解析小算例</h3>
-<p>选择单位方向的 q/k，使矩阵递推退化成一个容易手算的标量。对每一步：</p>
-<pre><code class="language-text">先衰减：s_decay = g × s
-计算需要写入的修正：delta = beta × (v - s_decay)
-更新状态：s_new = s_decay + delta
-</code></pre>
-<p>设置初始状态为 0、<code>v = 2</code>、<code>beta = 0.25</code>、<code>g = 0.999</code>：</p>
-<pre><code class="language-text">第一步：s1 = 0 + 0.25 × 2 = 0.5
-第二步：s2 = 0.999 × 0.5 + 0.25 × (2 - 0.999 × 0.5)
-          = 0.874625
-</code></pre>
-<p><code>0.999</code> 转成 BF16 会舍入到 1；按这一衰减计算，第二步会变成 <code>0.875</code>。差值很小，但可在不加载 4B 权重的情况下明确区分两条链路。实验还使用两个 value heads，覆盖 key/query heads 的复制关系。</p>
-<p>原因可以直接从表示精度看：BF16 的显式尾数为 7 bit，在略小于 1 的区间中，相邻可表示数的间隔是 <code>2^-8 = 0.00390625</code>。1 的下一个较小可表示数为 <code>0.99609375</code>，所以 <code>0.999</code> 更接近 1。BF16 和 float32 都使用 8 bit 指数；这里关键是有效精度与舍入发生的位置。</p>
-<p>当时的第一版接入是在进入原生 GDN 前把输入提升到 float32，以保留衰减和状态，再把输出转回输入 dtype；这是针对接口精度差异的早期修复尝试。后面的真实模型对照发现这一方案仍有误差，因此当前 BF16 正式路径已换成固定参考的混合精度内核，float32 输入仍走原生路径；详见第 6 节，不能把早期方案当成当前实现。</p>
-<p><strong>配置、输入与复验。</strong> 测试从固定 SDK 与参考路径的 dtype 差异出发，构造两步输入：q/k 均为 BF16、形状 <code>[1,2,1,128]</code> 的单位方向向量；v 为 BF16 <code>[1,2,2,128]</code>、各分量为 2；衰减 g 为 float32、值 0.999；beta 为 BF16、值 0.25，初始状态为零。两个 value head 用来覆盖头复制。取矩阵首个 key 方向的状态分量，便得到上述手算递推；其他分量和完整状态仍由实际张量算子计算。具体代码见 <a href="../../tests/integration/gated_delta.cpp">GDN 集成测试</a>。</p>
-<p>原生 SDK 的 BF16 q/k 路径将 0.999 舍入到 1，预期状态因此从 0.874625 变成 0.875；测试实际记录误差 <code>0.000375032</code>。处理依据是保留参考的 float32 衰减和状态语义：早期先提升输入，最终改用来源明确的混合精度内核（见第 6 节）。当前可按 <a href="../../docs/build.md">构建指南</a> 准备支持 Metal 的环境，再运行 <code>ctest --test-dir runs/d2/build -R '^compute.gated_delta$' -V</code>，检查解析误差和分块误差不超过 <code>1e-6</code>、状态 dtype 为 float32；实际构建目录以本机配置为准。测试调用当前正式实现及 SDK 对照，不重建早期整模型失败版本。</p>
+<h3 id="从接口检查得到假设">场景与接口来源</h3>
+<p>Qwen3.5 的 GDN 层处理每个 token 时更新递推状态，后续 token 从该状态继续。衰减系数 g 控制旧状态保留多少，再结合当前输入修正状态。固定 MLX-LM 0.32.2 参考使用混合精度：q/k/v 为 BF16，而衰减 g 和递推状态为 float32。正式实现使用 C++/MLX，因此先检查能否直接用 SDK 的 <code>mx::fast::gated_delta_update</code> 保留相同精度语义。</p>
+<p>固定 SDK 的 BF16 q/k 路径会先依据 q/k dtype 转换其他输入，包括衰减系数；参考路径保留 float32 衰减和状态。源码分析据此提出假设：g 可能在递推前已舍入，即使最终状态仍为 float32，差别也无法恢复。原生接口来自固定 MLX SDK；参考模型路径为 MLX-LM 0.32.2；项目计算入口是 <a href="../../src/compute/gated_delta.cpp">gated_delta.cpp</a>。这是接口行为差异的检查，不是说所有版本的 SDK 均如此。</p>
+<p><strong>2026-10-29 上游核对：</strong>MLX <a href="https://github.com/ml-explore/mlx/blob/main/mlx/fast.cpp">main 的 gated_delta_update</a> 当前明确将 g 和 beta 转为 float32，源码注释说明接近 1 的衰减需要精度；这表明不能将固定环境的历史行为泛化为当前上游。main 是变化中的分支，不证明本机 SDK 已包含修复，也不证明何时进入某个发布版。查询官方 v0.32.4 标签的 fast.cpp 未找到该接口，而本机锁定版本的 SDK 头文件存在声明、二进制摘要与项目规则一致；标签与当前 wheel 的源码身份尚未核清，不能直接拿该标签解释本机实现。应按实际二进制、接口和行为分别核验。</p>
+<p>MLX-LM 0.32.2 在 <a href="https://github.com/ml-explore/mlx-lm/blob/v0.32.2/mlx_lm/models/gated_delta.py">gated_delta.py</a> 提供自行组合 MLX 算子的递推路径与 custom-kernel 路径；Python 包装器并非当前 C++ 主路径可直接调用的原生接口。上游 main 的精度调整是候选方向，不等于已验证对齐本项目固定参考、全部层和分块；切换前需要固定版本身份，并完成小算例、完整模型、状态和资源对照。历史 float32 全输入方案通过小算例但真实模型仍有误差，不能用单一指标取代整链路验证。</p>
+<p>核对固定 MLX-LM 的 Qwen3.5 路径：Qwen 层调用的是 MLX-LM 自身的 gated_delta_update 包装器；满足 GPU 和形状条件时选择该文件中由 mx.fast.metal_kernel 创建的内核，否则调用组合 MLX 算子的 gated_delta_ops。该路径没有调用 mx.fast.gated_delta_update 原生递推；但仍使用 MLX 张量和 kernel 接口。源码中内核分支与精度选择是事实，没有找到说明“因为原生接口有缺陷所以不用它”的注释，不能据此推断维护者动机。对本项目参考契约而言，固定 SDK 的 BF16 路径丢失 g 精度已由小算例观察；整模型 float32 提升路径与参考不一致是另一项观察，尚不足以单独认定原生数学实现存在通用 bug。</p>
+<p><strong>g 从哪里来：</strong>真实模型由当前层输入 x 经过 <code>in_proj_a</code> 得到 a，再结合模型参数 dt_bias 和 A_log，按 <code>g = exp(-exp(A_log) × softplus(a + dt_bias))</code> 计算每个 token、value head 的衰减，见 <a href="../../src/model/qwen35.cpp">模型实现</a>与固定 MLX-LM 的 compute_g。a、dt_bias 可为 BF16，A_log 以 float32 参与计算，最终 g 为 float32；前段即使已有 BF16 舍入，后续 float32 非线性仍可产生 BF16 不可精确表示的结果。若最终 g 已被存成 BF16，则不可能精确保存 0.999：它先舍入为 1，之后再转 float32 也不能恢复。测试中的 0.999 是人为选定以放大差异，不是已证实真实模型某步出现了该数值。</p>
+<h3 id="如何把大模型问题压缩为解析小算例">输入与选择原因</h3>
+<p>构造两个连续 token 的小规模张量，而非加载整模型。q/k 使用单位方向，使状态矩阵的首个 key 方向分量能手算；其余分量和完整状态仍由实际张量算子计算。具体输入见 <a href="../../tests/integration/gated_delta.cpp">GDN 集成测试</a>：</p>
+<table><thead><tr><th>输入</th><th>值、类型与形状</th><th>为什么选择</th></tr></thead><tbody>
+<tr><td>q、k</td><td>BF16，<code>[1,2,1,128]</code>；每个向量为 <code>[1,0,…,0]</code></td><td>两步，单位 key/query 方向便于观察一个状态分量。</td></tr>
+<tr><td>v</td><td>BF16，<code>[1,2,2,128]</code>，每个分量为 2</td><td>固定写入目标；两个 value head 覆盖 q/k head 与 value head 的对应。</td></tr>
+<tr><td>g</td><td>float32，<code>[1,2,2]</code>，值为 0.999</td><td>接近 1，但转换成 BF16 会变成 1，便于区分精度路径。</td></tr>
+<tr><td>beta</td><td>BF16，<code>[1,2,2]</code>，值为 0.25</td><td>控制写入比例，便于手算。</td></tr>
+<tr><td>初始状态</td><td>未传入，按接口使用全零状态</td><td>保证两个路径有确定、相同的起点。</td></tr></tbody></table>
+<p>这些值是人为构造的机制输入，不是从某句文本得到的真实模型中间值。下文的 s 是矩阵中一个分量，并非把真实模型的状态视作标量。</p>
+<h3>逐 token 计算与观察</h3>
+<p>在这个单位方向的小算例中，所选状态分量每一步遵循：</p>
+<pre><code>s_decay = g × s
+delta   = beta × (v - s_decay)
+s_new   = s_decay + delta</code></pre>
+<p>保留 float32 的 <code>g = 0.999</code>，从 s = 0 开始：</p>
+<pre><code>第一个 token：
+  s_decay = 0.999 × 0 = 0
+  delta   = 0.25 × (2 - 0) = 0.5
+  s₁      = 0 + 0.5 = 0.5
+
+第二个 token：
+  s_decay = 0.999 × 0.5 = 0.4995
+  delta   = 0.25 × (2 - 0.4995) = 0.375125
+  s₂      = 0.4995 + 0.375125 = 0.874625</code></pre>
+<p>BF16 在略小于 1 的区间相邻数间隔为 <code>2^-8 = 0.00390625</code>；1 以下相邻值为 0.99609375，因此 0.999 转换为 BF16 时更接近 1。未适配路径先将 g 舍入为 1：第一步仍为 0.5，第二步则为 <code>1 × 0.5 + 0.25 × (2 - 0.5) = 0.875</code>，相差约 0.000375。即便后续将这个 1 保存为 float32，原来的 0.999 也不会回来。</p>
+<h3>两阶段调整及来源</h3>
+<p>早期先将输入提升为 float32，调用 MLX 原生 GDN，再把输出转回 BF16；目的是避免原生 BF16 路径过早舍入衰减。这一尝试保留了小算例所需的衰减精度，但随后真实 4B 模型逐层对照仍有累积误差，具体诊断和未证实的根因见 <a href="#第一处数值问题小算例通过整模型仍不够接近">第 6 节第一处数值问题</a>。</p>
+<p>最终 BF16 正式路径通过 MLX C++ custom-kernel 接口接入固定参考的混合精度递推：直接保留 BF16 q/k/v 与 float32 衰减和状态。内核改编自 <a href="https://github.com/ml-explore/mlx-lm/blob/v0.32.2/mlx_lm/models/gated_delta.py">MLX-LM 0.32.2 gated_delta.py</a>，来源与许可见 <a href="../../third_party/mlx-lm-gdn/README.md">内核说明</a>；float32 输入仍走原生 SDK 路径。此选择为对齐固定参考的数值行为，不能推广为所有 GDN 都需要自定义 kernel 或该实现必然更快。</p>
 <h3 id="当前观察与能推出的结论">当前观察与能推出的结论</h3>
 <p><a href="../../tests/integration/gated_delta.cpp">解析测试</a> 已在本机 GPU 执行通过：适配后的状态与手算值符合 <code>1e-6</code> 绝对容差，分两次调用传递状态与一次完整调用的最终状态也符合相同容差。测试另行输出未适配 SDK 路径的误差，作为诊断观察；验收依据始终是解析结果。</p>
+<p>该测试同时检查正式状态 dtype 为 float32，以及 float32 输入的原生路径仍符合解析结果；分块检查将第一步输出状态传给第二次调用。实际构建目录与环境以 <a href="../../docs/build.md">构建指南</a> 为准，需要本机 Metal 可访问；该测试不切回早期整模型实现。下表是历史实测，本次整理没有重新运行 GPU 测试。</p>
 <p>2026-10-27 的实测摘要如下，命令为 <code>ctest --test-dir runs/d2/build -R '^compute.gated_delta$' -V</code>，在本机 Metal 可访问的环境执行：</p>
 <table>
 <thead>
@@ -345,6 +362,39 @@ h → RMSNorm → gated MLP      → 加回 h
 </tbody>
 </table>
 <p>这说明剩余漂移也存在于参考自身；相同分块方式的 C++ 与参考并没有额外误差。BF16 在不同 token 块大小下可能选择不同形状的量化矩阵乘和归约路径，低精度舍入经过多层可累积。这里的具体数值是实际基线，不应当泛化成其他模型/输入必然有相同误差。</p>
+<h4>源码中分块究竟改变什么？</h4>
+<p>对相同输入，在精确算术、正确因果 mask 和状态续接下，应得到相同数学结果；实际浮点实现不保证逐位一致，也不能把所有较大差异自动归因于舍入。以下是当前源码中可确认的执行图差异，而非已定位的漂移根因：</p>
+<table><thead><tr><th>位置</th><th>完整与分块的实际区别</th><th>对诊断的意义</th></tr></thead><tbody>
+<tr><td><a href="../../tools/numerical_validation/qwen35/probe.cpp">探针</a></td><td>完整 22 个 token 一次 forward；逐 token 22 次；块大小 3 为 8 次。每次对 logits 和状态执行 mx::eval。</td><td>调用次数和物化边界不同；边界存在不等于已证明发生额外舍入。</td></tr>
+<tr><td><a href="../../src/model/qwen35.cpp">量化线性层</a></td><td>同一 quantized_matmul 接收不同长度的 token 维：22、1 或 3（末块 1）。</td><td>不同矩阵形状可能选择不同 kernel 或归约方式；当时尚未观测具体选择或首次漂移，后续实验见下文。</td></tr>
+<tr><td>全注意力</td><td>分块时将旧 K/V 与新 K/V 拼接，按 offset 和当前块长度创建因果 mask；完整时没有旧缓存。</td><td>例如第二个三 token 块的 query 长度为 3、KV 长度为 6；其可见位置应与完整序列对应行相同，需验证 offset 与 mask。</td></tr>
+<tr><td>GDN 短卷积</td><td>每块先做 QKV 投影，再拼接已保存的 3 个卷积输入；首块用零初始化，保留末尾 3 个输入。</td><td>完整和分块窗口应相同；多次调用导致不同输入形状与状态边界。</td></tr>
+<tr><td><a href="../../src/compute/gated_delta.cpp">GDN 递推</a></td><td>当前 BF16 kernel 在每次调用内按 token 顺序循环；分块结束将 float32 状态写出，下次加载。</td><td>逻辑更新次序仍相同；跨调用写回和加载是潜在观察点，不能未经测量称其必然引入额外舍入。</td></tr>
+</tbody></table>
+<p>最初 D4 验证的历史证据只确认参考自身的逐 token 与完整 logits 有漂移，同模式 C++ 与参考完全一致；当时分块未保存各层完整诊断张量，不能据此确定首发层或算子。后续实际观测如下。</p>
+<h4 id="cross-mode-observation-20261029">2026-10-29：实际逐层观测与投影隔离</h4>
+<p>固定输入为“请只输出数字：一加一等于几？”经模板后的 22 个 token；Apple M4 / 24 GiB、macOS 15.7.3、MLX 0.32.4、MLX-LM 0.32.2，使用同一 4-bit 制品，artifact.json SHA-256 <code>a4fbcefc2262ae474a3ead3ecbe9ca14bccb6b2b82f247d134e128e4e1029978</code>。本次比较的是 <strong>MLX-LM 参考自身</strong>完整与逐 token 路径，不是新一次 C++ 验收。预检允许 1 GiB 新增峰值，worker 顺序运行并清理临时大张量。</p>
+<p>先给参考执行加只记录模块返回值的观测，再与同模式未加观测的参考比较：完整模式 100 个共同保存项、逐 token 模式 66 个共同保存项全部逐位相同，均生成 <code>[17, 248046]</code>。这支持观测未改变已比较的 logits、缓存等结果，但不能保证所有未观测内部变量也相同。逐 token 与完整 logits 的 scaled RMSE 为 0.01681646、最大绝对差 0.5625，与历史值一致。</p>
+<table><thead><tr><th>跨模式观测点</th><th>最大绝对差</th><th>scaled RMSE</th><th>结论</th></tr></thead><tbody>
+<tr><td>第 0 层 input RMSNorm</td><td>0</td><td>0</td><td>输入归一化输出逐位一致</td></tr>
+<tr><td>第 0 层 QKV 投影</td><td>0.125</td><td>0.00149134</td><td>最早已观测到差异的模块；第 1 个 token 即有差异</td></tr>
+<tr><td>第 0 层 a 投影</td><td>0.0625</td><td>0.00149439</td><td>与 QKV 并行的输入投影也不同，不代表由 QKV 导致</td></tr>
+<tr><td>第 0 层卷积输出</td><td>0.125</td><td>0.00160534</td><td>卷积输入已存在差异，不能归责卷积本身</td></tr>
+<tr><td>第 0 层最终输出</td><td>0.015625</td><td>0.00297739</td><td>差异已传到首层输出</td></tr>
+<tr><td>logits</td><td>0.5625</td><td>0.01681646</td><td>整个短输入的最终原始漂移</td></tr></tbody></table>
+<p>隔离实验进一步从同一参考模型取第 0 层 input RMSNorm 输出并物化一次，固定 BF16 输入 <code>[1,22,2560]</code> 和同一 <code>in_proj_qkv</code> 权重；分别一次投影 22 token、逐 token 投影后拼接、每 3 token 投影后拼接。逐 token 与完整的 QKV 输出最大绝对差 0.125，scaled RMSE 0.00149134；三 token 与完整也存在差异。最大差出现在第 3 个 token（索引 2，ID 198）、特征索引 2523：完整值 17.625，逐 token 与三 token 值均为 17.5。这在固定输入和权重下独立重现了投影对 token 维度分组的敏感性。</p>
+<p>因此，已将最早<strong>观测到</strong>的跨模式差异定位到第 0 层输入投影；隔离对照支持该投影自身在不同形状下产生数值差异，不需要先假设缓存、卷积或递推状态不一致。a/b/z 等并行投影同样发生差异；未观测的操作可能也有影响，不能宣称 QKV 是唯一原因。这一步尚未追踪具体 kernel 选择、归约顺序或 GPU 指令；后续 shader 列表见下一小节，不能把它们写成已确认根因，也不将首次不同的特征解释成最终输出的唯一因果来源。脚本、完整逐层摘要、操作及资源边界保存在 <a href="../../research/cpp-feasibility/cross-mode-drift/README.md">独立实验记录</a>；本次无精度或性能优化，更不改变正式验收快照。</p>
+<p>上游 <a href="https://github.com/ml-explore/mlx/blob/v0.32.4/mlx/backend/metal/quantized.cpp">MLX v0.32.4 Metal 量化矩阵乘源码</a>按矩阵维度、权重方向和设备等条件选择 qmv、qmm / split-K 等分支；较小的向量批次与较大的矩阵运算适合不同并行度和数据复用。这个源码证明存在形状相关分派，但当时项目本机 wheel 与 GitHub 标签的源码身份尚未核清，也没有 GPU 实际 dispatch 记录，因此不能只根据上游源码确认具体选择或数值漂移原因。不同形状也可能进入同一 kernel 却改变边界或归约；需分别捕获实际 kernel、核对二进制身份，并在相同输入下做受控对照。</p>
+<h4 id="metal-kernel-investigation-20261029">继续确认：不同形状对应哪些 Metal shader？</h4>
+<p>把上述模型第 0 层同一 QKV 投影单独运行在三个独立进程中，每个进程只执行一种 token 长度；Xcode <code>xctrace</code> 使用 Metal System Trace，命令行导出 <code>metal-shader-profiler-shader-list</code>。每个进程的归一化输入、4-bit 权重和计算接口相同。22 token 的输入形状为 <code>[1,22,2560]</code>；1 token 选取相同的第 2 号位置；3 token 选取前 3 个。结果为：</p>
+<table><thead><tr><th>token 长度</th><th>导出的量化 shader 名称</th><th>第 2 号 token、第 2523 号输出</th></tr></thead><tbody>
+<tr><td>1</td><td><code>affine_qmv_fast_bfloat16_t_gs_64_b_4…</code></td><td>17.5</td></tr>
+<tr><td>3</td><td><code>affine_qmv_wide_bfloat16_t_gs_64_b_4_nv_3…</code></td><td>17.5</td></tr>
+<tr><td>22</td><td><code>affine_qmm_t_splitk_bfloat16_t_gs_64_b_4…</code></td><td>17.625</td></tr></tbody></table>
+<p>三个独立追踪各只列出上述一个量化 shader，加上脚本只调用一次目标投影，是不同形状选到不同量化 GPU 路径的<strong>强证据</strong>；不过这里导出的是 shader 列表，不是逐次 dispatch 的事件记录，三 token 追踪的 profiler interval 和 sample 表为空，因此不能把列表直接等同于已观测的逐条执行指令。1 与 3 的 shader 不同而该分量输出相同，也说明“kernel 不同”不必然导致每个数值不同。要严格归因，还需能控制同一形状分别运行不同 kernel 的实验，或取得包含实际 dispatch 的跟踪。</p>
+<p>为何有不同路径？1 行时类似一个向量乘量化矩阵；3 行时可以让几个输入复用读取的权重；22 行时更适合矩阵分块并行。<code>splitk</code> 表示沿内积的 K 维拆分计算并合并部分和。不同分工可能改变运算顺序、中间精度和舍入位置；它们帮助适配不同工作量，但这次没有逐项测出哪一种细节造成该误差。上游 <a href="https://github.com/ml-explore/mlx/blob/v0.32.4/mlx/backend/metal/quantized.cpp">量化分派源码</a>展示了按形状和设备选择不同路径；本机 <code>mlx-metal 0.32.4</code> 的动态库与 metallib 与已安装包 RECORD 的 SHA-256 一致，不能据此证明 wheel 由该 GitHub 标签的特定 commit 构建。</p>
+<p>高精度对照取同一位置的 BF16 输入和 4-bit 权重，用模型中的 scale、bias 经 float32 反量化，再用 float64 在 CPU 求内积，得到 <code>17.5619275775</code>。这是基于量化制品的参考，并非原始 BF16 权重或 GPU 内部中间值。在这一范围相邻的 BF16 值为 <code>17.5</code> 与 <code>17.625</code>，中点 <code>17.5625</code> 距参考约 <code>0.00057242</code>，因此很小的中间差别也可能跨过舍入中点，出现最终相差 <code>0.125</code> 的现象。相对该参考，两边误差分别约 <code>0.06193</code> 和 <code>0.06307</code>；这一个分量不能代表整体精度，也不能证明实际 kernel 按该参考计算后只做了一次最终舍入。</p>
+<p>实际跟踪、命令、资源限制和机器可读摘要见 <a href="../../research/cpp-feasibility/cross-mode-drift/README.md">独立实验记录</a>。Metal 帧捕获会保存关联的模型缓冲区，即使只运行一个投影也可能占数 GiB；预检并逐份清理。初次未等待 GPU 完成时生成的捕获没有实际命令，重试时使用 <code>mx.synchronize()</code>。该捕获无法用简单字符串搜索可靠读取分派，后来改用命令行 xctrace 导出。</p>
 <p>因此修正的是对照设计：同种执行方式做跨语言检查，保留原 <code>0.01</code>/<code>0.5</code> 上限；完整与分块之间另报原始漂移，并比较：</p>
 <pre><code class="language-text">(C++ 分块 - C++ 完整) - (参考分块 - 参考完整)
 </code></pre>

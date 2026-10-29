@@ -40,3 +40,7 @@ cmake --build runs/cpp-feasibility/build -j 2
 注意力测试使用完整序列 K/V 的前缀视图，验证因果注意力与逐 token 计算一致；没有实现动态 cache 分配或缓存持久化。递推分块测试显式携带状态，不能代替完整模型的混合 cache 验收。
 
 参考来源：[MLX](https://github.com/ml-explore/mlx)、[MLX LM](https://github.com/ml-explore/mlx-lm)，包括本机 MLX LM 0.32.2 的 `models/gated_delta.py` 中 `gated_delta_ops`。原生融合递推与组合算子递推作为两个独立实验路径比较，没有失败后静默切换。框架共享意味着跨语言对照不能排除共享底层缺陷，因此另加量化/反量化等价式和递推门的有限差分检查。
+
+## 额外的目标模型观测
+
+[分块漂移诊断](cross-mode-drift/README.md) 使用已准备的固定 Qwen3.5-4B 制品，在 MLX-LM 参考路径定位完整与逐 token 执行的差异；它是独立的后续实验，不改变上文早期可行性验证的输入与结论。

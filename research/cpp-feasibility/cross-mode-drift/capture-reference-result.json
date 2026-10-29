@@ -1,0 +1,58 @@
+{
+  "artifact_sha256": "a4fbcefc2262ae474a3ead3ecbe9ca14bccb6b2b82f247d134e128e4e1029978",
+  "input_shape": [
+    1,
+    22,
+    2560
+  ],
+  "selected_token_index": 2,
+  "selected_feature_index": 2523,
+  "captures": {
+    "1": {
+      "value": 17.5,
+      "trace_bytes": 2516557515,
+      "file_count": 684,
+      "candidate_strings": [
+        "gather_qmm",
+        "qMV",
+        "xfQMv"
+      ]
+    },
+    "3": {
+      "value": 17.5,
+      "trace_bytes": 2516589770,
+      "file_count": 684,
+      "candidate_strings": [
+        "gather_qmm",
+        "qMV",
+        "xfQMv"
+      ]
+    },
+    "22": {
+      "value": 17.625,
+      "trace_bytes": 2516647994,
+      "file_count": 685,
+      "candidate_strings": [
+        "gather_qmm",
+        "qMV",
+        "xfQMv"
+      ]
+    }
+  },
+  "float64_reference": {
+    "value": 17.561927577480674,
+    "interpretation": "float64 dot of BF16 activation values and affine weights reconstructed via float32 dequantization; not original BF16 weights or a reference GPU kernel",
+    "weight_shape": [
+      1,
+      2560
+    ],
+    "weight_dtype": "mlx.core.float32",
+    "activation_dtype": "mlx.core.bfloat16",
+    "abs_errors": {
+      "1": 0.06192757748067379,
+      "3": 0.06192757748067379,
+      "22": 0.06307242251932621
+    }
+  },
+  "peak_mlx_bytes": 2369451528
+}

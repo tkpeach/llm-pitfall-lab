@@ -1,0 +1,58 @@
+{
+  "input": "same materialized layer-0 inputnorm tensor and fixed in_proj_qkv weights, shared in one process",
+  "artifact_sha256": "a4fbcefc2262ae474a3ead3ecbe9ca14bccb6b2b82f247d134e128e4e1029978",
+  "token_ids": [
+    248045,
+    846,
+    198,
+    96220,
+    96227,
+    100627,
+    99129,
+    4960,
+    137945,
+    95744,
+    102149,
+    96370,
+    10992,
+    248046,
+    198,
+    248045,
+    74455,
+    198,
+    248068,
+    271,
+    248069,
+    271
+  ],
+  "input_dtype": "mlx.core.bfloat16",
+  "input_shape": [
+    1,
+    22,
+    2560
+  ],
+  "qkv_dtype": "mlx.core.bfloat16",
+  "token_vs_full": {
+    "equal": false,
+    "scaled_rmse": 0.001491340921410956,
+    "max_abs": 0.125,
+    "max_token_index_zero_based": 2,
+    "max_feature_index_zero_based": 2523,
+    "token_id": 198,
+    "chunk_value": 17.5,
+    "full_value": 17.625,
+    "first_token_max_abs": 0.0625
+  },
+  "three_vs_full": {
+    "equal": false,
+    "scaled_rmse": 0.0014913411756899218,
+    "max_abs": 0.125,
+    "max_token_index_zero_based": 2,
+    "max_feature_index_zero_based": 2523,
+    "token_id": 198,
+    "chunk_value": 17.5,
+    "full_value": 17.625,
+    "first_token_max_abs": 0.0625
+  },
+  "peak_mlx_bytes": 2372515860
+}
