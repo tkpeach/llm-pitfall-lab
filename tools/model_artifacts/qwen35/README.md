@@ -15,7 +15,7 @@
 
 从项目根使用辅助环境运行 `prepare_qwen35.py download` 获取固定源，再使用 `convert` 写入新的执行目录。再次转换时显式指定不存在的 `--output` 目录，最后运行比较器核对基线和新制品。完整参数、当前路径、资源边界及命令统一维护在 [制品准备与复现说明](../../../docs/model-validation.md)，不在此复制第二套操作规范。
 
-规则中的 sanitizer 来源为 MLX-LM 0.32.2 的 Qwen3.5 实现，量化、加载与保存也沿用固定上游。输入权重来源、命名和数值变换的含义见 [Qwen 专题](../../../learning/topics/qwen35-components-and-weight-conversion.md)。
+规则中的 sanitizer 来源为 MLX-LM 0.32.2 的 Qwen3.5 实现，量化、加载与保存也沿用固定上游。输入权重来源、命名和数值变换的含义见 [Qwen 专题](../../../learning/topics/qwen35-components-and-weight-conversion.html)。
 
 脚本、规则和依赖锁随 Git 管理。每次转换的 `conversion-recipe.json`、`converter-identity.json`、`conversion-audit.json` 与 artifact 清单随产物保存在 `runs/`；必要的小型验收摘要由 [当前证据](../../../evidence/current.json) 维护。不能为了整理目录而改写既有制品的历史来源记录。
 

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>C++23 与错误返回</title><style>html{color-scheme:light dark}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.75;margin:0 auto;max-width:1050px;padding:24px;color:#222;background:#fafafa}a{color:#205ab1}h1,h2,h3,h4{line-height:1.35;scroll-margin-top:1em}h2{border-bottom:1px solid #ccd3dc;padding-bottom:.35em;margin-top:2em}pre{overflow:auto;padding:1em;background:#edf1f5;border-radius:8px}code{font-family:ui-monospace,monospace}table{border-collapse:collapse;display:block;overflow:auto}th,td{border:1px solid #bbc4cf;padding:.5em;vertical-align:top}th{background:#e7edf3}blockquote{border-left:4px solid #b1bdcc;padding-left:1em;color:#555}.diagram{margin:1em 0;padding:1em;background:#eff4fb;border:1px solid #c4d2e2;border-radius:8px}.diagram-edges{display:grid;gap:.55em}.edge{display:flex;align-items:center;gap:.6em}.node{display:inline-block;border:1px solid #819cba;border-radius:7px;background:#fff;padding:.35em .7em;min-width:7em;text-align:center}.arrow{color:#305c8c;display:flex;flex-direction:column;text-align:center}.arrow small{font-size:.75em}details{margin-top:.8em;font-size:.85em} @media(prefers-color-scheme:dark){body{background:#171a1f;color:#e4e8ee}a{color:#9dc2ff}pre,th{background:#262c34}blockquote{color:#b6beca}.diagram{background:#222c38;border-color:#45556b}.node{background:#202831;border-color:#68809d}.arrow{color:#a1c9ff}}</style></head><body><nav><a href="../README.html">← 学习笔记目录</a></nav><main>
+<h1 id="c23-与错误返回">C++23 与错误返回</h1>
+<h2 id="stdexpected-是类型不是新的语法"><code>std::expected</code> 是类型，不是新的语法</h2>
+<p><code>std::expected&lt;T, E&gt;</code> 是 C++23 标准库模板，使用普通的 C++ 模板语法，声明在 <code>&lt;expected&gt;</code> 中。它表示一次操作的结果：成功时保存 <code>T</code>，失败时保存 <code>E</code>，两者只存在一种。</p>
+<pre><code class="language-cpp">#include &lt;expected&gt;
+#include &lt;string&gt;
+
+std::expected&lt;int, std::string&gt; parse_positive(int input) {
+  if (input &lt;= 0) {
+    return std::unexpected(std::string{&quot;必须是正数&quot;});
+  }
+  return input;
+}
+
+auto result = parse_positive(-1);
+if (result) {
+  // *result 是成功值。
+} else {
+  // result.error() 是错误说明。
+}
+</code></pre>
+<p><code>std::unexpected</code> 用于明确构造失败结果。<code>std::expected</code> 让失败成为函数返回类型的一部分，但不会强制调用者处理错误，也不意味着函数绝不会抛异常。</p>
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>适用情形与区别</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>std::optional&lt;T&gt;</code></td>
+<td>只有“有值/无值”，无须表达失败原因</td>
+</tr>
+<tr>
+<td><code>std::expected&lt;T, E&gt;</code></td>
+<td>正常控制流中可能失败，需要携带原因并显式处理</td>
+</tr>
+<tr>
+<td>异常</td>
+<td>通过调用栈传播错误；调用者不在每层返回类型中显式携带错误</td>
+</tr>
+</tbody>
+</table>
+<p>选择取决于接口和错误传播方式，不必将所有错误统一改成 <code>expected</code>。调用 <code>.value()</code> 时若处于失败状态仍会抛出异常；应先判断或有意处理这一行为。</p>
+<h2 id="为什么-c23-不等于所有特性都可用">为什么 C++23 不等于所有特性都可用</h2>
+<p>语言标准、编译器和标准库是不同层次：编译器处理语法，标准库提供模板和函数。开启 C++23 模式，不保证配套标准库已实现全部 C++23 功能。</p>
+<p><code>std::expected</code> 提供结果类型，<code>std::println</code> 提供格式化输出。项目选择 C++23 是为了使用合适的现代语言和库能力，但具体能力仍需固定工具链验证；也没有必要为了“使用新标准”重写已有代码。</p>
+<p>对固定环境的小项目，声明标准要求、禁止悄悄降级、编译链接正式代码，通常已经足够。只有需要提前诊断特定兼容问题或选择实现路径时，才值得增加单独的特性探测；逐项探测所有标准特性既不现实，也不证明完整支持。</p>
+<p><code>CheckCXXSourceCompiles</code> 是 CMake 自带模块，提供试编译并链接小程序的命令，不执行程序。它是可选的配置检查手段，不是 C++23 支持的认证。本项目的实际使用要求见 <a href="../../docs/build.md">构建约定</a>。</p>
+<h2 id="复习问题">复习问题</h2>
+<ul>
+<li><code>std::expected&lt;int, std::string&gt;</code> 与 <code>std::optional&lt;int&gt;</code> 相比，多表达了什么？</li>
+<li>既然返回类型是 <code>expected</code>，为什么调用 <code>.value()</code> 仍可能抛异常？</li>
+<li>为什么编译器接受 C++23 模式，仍可能找不到某个标准库接口？</li>
+</ul>
+
+</main></body></html>

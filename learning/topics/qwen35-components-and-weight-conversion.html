@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Qwen3.5-4B 专题：组件、任务路径与权重转换</title><style>html{color-scheme:light dark}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.75;margin:0 auto;max-width:1050px;padding:24px;color:#222;background:#fafafa}a{color:#205ab1}h1,h2,h3,h4{line-height:1.35;scroll-margin-top:1em}h2{border-bottom:1px solid #ccd3dc;padding-bottom:.35em;margin-top:2em}pre{overflow:auto;padding:1em;background:#edf1f5;border-radius:8px}code{font-family:ui-monospace,monospace}table{border-collapse:collapse;display:block;overflow:auto}th,td{border:1px solid #bbc4cf;padding:.5em;vertical-align:top}th{background:#e7edf3}blockquote{border-left:4px solid #b1bdcc;padding-left:1em;color:#555}.diagram{margin:1em 0;padding:1em;background:#eff4fb;border:1px solid #c4d2e2;border-radius:8px}.diagram-edges{display:grid;gap:.55em}.edge{display:flex;align-items:center;gap:.6em}.node{display:inline-block;border:1px solid #819cba;border-radius:7px;background:#fff;padding:.35em .7em;min-width:7em;text-align:center}.arrow{color:#305c8c;display:flex;flex-direction:column;text-align:center}.arrow small{font-size:.75em}details{margin-top:.8em;font-size:.85em} @media(prefers-color-scheme:dark){body{background:#171a1f;color:#e4e8ee}a{color:#9dc2ff}pre,th{background:#262c34}blockquote{color:#b6beca}.diagram{background:#222c38;border-color:#45556b}.node{background:#202831;border-color:#68809d}.arrow{color:#a1c9ff}} .graph-scroll{overflow-x:auto}.graph-scroll svg{display:block;max-width:none}</style></head><body><nav><a href="../README.html">← 学习笔记目录</a></nav><main>
+<h1 id="qwen35-4b-专题组件任务路径与权重转换">Qwen3.5-4B 专题：组件、任务路径与权重转换</h1>
+<p>本页集中解释本轮针对 Qwen 的问题。范围限定为 <code>Qwen/Qwen3.5-4B</code>、revision <code>851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a</code>，不能把这里的层数、参数命名或转换规则推广到整个 Qwen 家族。结构依据为 <a href="https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/config.json">固定官方配置</a>、原始权重索引和固定版本的加载实现。</p>
+<p>通用多模态机制见 <a href="multimodal-backbones-and-image-generation.html">多模态笔记</a>，训练机制见 <a href="sft-lora-and-weight-updates.html">SFT/LoRA 笔记</a>；本页用具体模型串联它们。</p>
+<h2 id="1-一个完整模型为什么会有多个组件">1. 一个完整模型为什么会有多个组件</h2>
+<p>完整权重包含语言网络、视觉编码与合并组件，以及 MTP 辅助分支。它们有可区分的参数，却不是两个或三个各自独立回答问题的聊天模型。</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>具体结构与作用</th>
+<th>与其他部分的关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tokenizer、词表和聊天模板</td>
+<td>把消息组织成文本 token IDs；输出 IDs 再解码成文字</td>
+<td>这些是输入输出规则，不是另一个神经网络</td>
+</tr>
+<tr>
+<td>文本 embedding</td>
+<td>将词表 ID 映射为 2560 维向量</td>
+<td>供语言主干处理；其矩阵也用于最终词表投影，即 tied embeddings</td>
+</tr>
+<tr>
+<td>语言主干</td>
+<td>32 层：<code>[GDN, GDN, GDN, 全注意力] × 8</code>，每层还有归一化、MLP、残差</td>
+<td>共 24 个递推层、8 个全注意力层；图文理解中的融合推理使用这同一套语言参数</td>
+</tr>
+<tr>
+<td>视觉组件</td>
+<td>patch embedding、24 个视觉编码块、merger；视觉内部 hidden size 为 1024，输出映射到 2560</td>
+<td>把图片/视频内容变为语言侧可接收的视觉表示，不直接输出自然语言答案</td>
+</tr>
+<tr>
+<td>最终归一化与词表投影</td>
+<td>把语言 hidden states 转为词表 logits</td>
+<td>共享输入 embedding 权重不表示免去输出投影计算</td>
+</tr>
+<tr>
+<td>MTP 辅助分支</td>
+<td>多 token 预测相关的额外参数；固定配置声明一个 MTP hidden layer</td>
+<td>配合特定训练/解码方案使用，不是普通逐 token 生成必须经过的主干层</td>
+</tr>
+</tbody>
+</table>
+<p>“一个共享语言主干”并不表示全系统只有一个有参数的网络：视觉侧也有自己的编码主干。视觉表示已被训练为与语言侧接口匹配；2560 维相同只是连接所需条件之一，不能把任意同维向量塞入后期待正确理解。</p>
+<p>GDN 层通过卷积历史和递推状态保留上下文；全注意力层读取历史 keys/values。于是同一个文本请求同时需要不同类型的状态，而不是所有层都只维护 KV cache。更详细的数据流和状态观察见 <a href="fixed-model-numerical-validation.html#2-%E4%BB%8E%E6%A8%A1%E5%9E%8B%E7%BB%93%E6%9E%84%E6%8E%A8%E5%AF%BC%E8%A6%81%E8%A7%82%E5%AF%9F%E5%93%AA%E4%BA%9B%E7%8A%B6%E6%80%81">数值对照</a>。</p>
+<h3 id="语言层head-与维度怎样连接">语言层、head 与维度怎样连接</h3>
+<p>32 层是一个串联序列，24 个 GDN 层和 8 个全注意力层交错排列，不是两条并行主干。以下层号从 1 开始，每层都有自己的参数和状态：</p>
+<figure class="diagram"><div class="graph-scroll"><svg role="img" aria-label="流程图" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1785 155" width="1785" height="155"><defs><marker id="arrow1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#526c89"/></marker></defs><path d="M190,63 C208,63 207,63 225,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow1)"/><path d="M385,63 C403,63 402,63 420,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow1)"/><path d="M580,63 C598,63 597,63 615,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow1)"/><path d="M775,63 C793,63 792,63 810,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow1)"/><path d="M970,63 C988,63 987,63 1005,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow1)"/><path d="M1165,63 C1183,63 1182,63 1200,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow1)"/><path d="M1360,63 C1378,63 1377,63 1395,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow1)"/><path d="M1555,63 C1573,63 1572,63 1590,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow1)"/><rect x="30" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="110" y="51" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="110" dy="0">token embedding</tspan><tspan x="110" dy="19">每位置 2560 维</tspan></text><rect x="225" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="305" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="305" dy="0">第 1 层 GDN</tspan></text><rect x="420" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="500" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="500" dy="0">第 2 层 GDN</tspan></text><rect x="615" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="695" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="695" dy="0">第 3 层 GDN</tspan></text><rect x="810" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="890" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="890" dy="0">第 4 层全注意力</tspan></text><rect x="1005" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="1085" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="1085" dy="0">第 5 层 GDN</tspan></text><rect x="1200" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="1280" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="1280" dy="0">依次串联，重复四层模式</tspan></text><rect x="1395" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="1475" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="1475" dy="0">第 32 层全注意力</tspan></text><rect x="1590" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="1670" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="1670" dy="0">最终归一化与词表投影</tspan></text></svg></div><details><summary>查看图的原始定义</summary><pre><code>flowchart LR
+  E[&quot;token embedding&lt;br/&gt;每位置 2560 维&quot;] --&gt; G1[&quot;第 1 层 GDN&quot;] --&gt; G2[&quot;第 2 层 GDN&quot;] --&gt; G3[&quot;第 3 层 GDN&quot;] --&gt; A4[&quot;第 4 层全注意力&quot;]
+  A4 --&gt; G5[&quot;第 5 层 GDN&quot;] --&gt; MORE[&quot;依次串联，重复四层模式&quot;] --&gt; A32[&quot;第 32 层全注意力&quot;] --&gt; O[&quot;最终归一化与词表投影&quot;]
+</code></pre></details></figure>
+<p>每层先做归一化、对应的混合模块和残差，再做归一化、MLP 和残差。层与层之间每个位置的 hidden size 为 2560；MLP 的中间维度为 9216，再映射回 2560。不同层是串联；head 是特定混合模块内的并行计算分组，并不是整个层，也不是单独一个向量。</p>
+<p>在普通多头注意力中，一个位置的隐藏向量经投影得到多组 Q、K、V；每个 head 用对应 Q 和历史 K 计算权重、加权读取 V，得到一个输出向量；各 head 输出拼接后再投影。不同 head 可学习不同表示和读取方式，但不能预先断言每个 head 有特定人类语义。每个 token 不必全模型只有一个 V：普通多头情况下每个 head 有一个 V；实际模型可共享 KV。</p>
+<figure class="diagram"><div class="graph-scroll"><svg role="img" aria-label="流程图" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 405" width="1200" height="405"><defs><marker id="arrow2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#526c89"/></marker></defs><path d="M190,188 C208,188 207,63 225,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow2)"/><path d="M190,188 C208,188 207,188 225,188" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow2)"/><path d="M190,188 C208,188 207,313 225,313" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow2)"/><path d="M385,63 C403,63 597,188 615,188" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow2)"/><path d="M385,188 C403,188 402,313 420,313" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow2)"/><path d="M385,313 C403,313 402,313 420,313" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow2)"/><path d="M580,313 C598,313 597,188 615,188" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow2)"/><path d="M775,188 C793,188 792,188 810,188" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow2)"/><path d="M970,188 C988,188 987,188 1005,188" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow2)"/><rect x="30" y="155" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="110" y="184" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="110" dy="0">一个位置：隐藏向量 2560</tspan></text><rect x="225" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="305" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="305" dy="0">Q：16 个 head × 256</tspan></text><rect x="225" y="155" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="305" y="184" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="305" dy="0">K：4 个 head × 256</tspan></text><rect x="225" y="280" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="305" y="309" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="305" dy="0">V：4 个 head × 256</tspan></text><rect x="420" y="280" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="500" y="309" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="500" dy="0">本层缓存历史 K 和 V</tspan></text><rect x="615" y="155" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="695" y="176" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="695" dy="0">全注意力：每 4 个 Q head</tspan><tspan x="695" dy="19">共享一组 K/V head</tspan></text><rect x="810" y="155" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="890" y="184" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="890" dy="0">16 个输出 head × 256</tspan></text><rect x="1005" y="155" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="1085" y="176" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="1085" dy="0">拼接、门控与输出投影</tspan><tspan x="1085" dy="19">映射回 2560</tspan></text></svg></div><details><summary>查看图的原始定义</summary><pre><code>flowchart LR
+  X[&quot;一个位置：隐藏向量 2560&quot;] --&gt; Q[&quot;Q：16 个 head × 256&quot;]
+  X --&gt; K[&quot;K：4 个 head × 256&quot;]
+  X --&gt; V[&quot;V：4 个 head × 256&quot;]
+  Q --&gt; AT[&quot;全注意力：每 4 个 Q head&lt;br/&gt;共享一组 K/V head&quot;]
+  K --&gt; CACHE[&quot;本层缓存历史 K 和 V&quot;]
+  V --&gt; CACHE
+  CACHE --&gt; AT
+  AT --&gt; Y[&quot;16 个输出 head × 256&quot;] --&gt; P[&quot;拼接、门控与输出投影&lt;br/&gt;映射回 2560&quot;]
+</code></pre></details></figure>
+<p>图省略 Q 的归一化、RoPE 等细节；当前实现的 Q 投影还生成输出 gate。head 数是组数，head dimension 是每组向量长度；投影可改变总宽度，因此 <code>16 × 256</code> 不必等于 hidden size。GDN 的 Q/K 是 <code>16 × 128</code>、V 是 <code>32 × 128</code>；其 key dimension 和 value dimension 恰好都是 128，但含义分别是每个 Q/K 和 V 的向量长度。Q/K 头扩展以匹配 value 头，递推状态形状为 <code>[batch, 32, 128, 128]</code>；这不是把全注意力的计算套在 GDN 上。具体张量与状态见 <a href="fixed-model-numerical-validation.html#2-%E4%BB%8E%E6%A8%A1%E5%9E%8B%E7%BB%93%E6%9E%84%E6%8E%A8%E5%AF%BC%E8%A6%81%E8%A7%82%E5%AF%9F%E5%93%AA%E4%BA%9B%E7%8A%B6%E6%80%81">数值对照</a>。</p>
+<h3 id="kv-cache-仍然使用-k-和-v为什么通常不缓存-q">KV cache 仍然使用 K 和 V，为什么通常不缓存 Q</h3>
+<p>因果增量推理中，处理 A、B 后，本层缓存 <code>[kA, kB]</code> 和 <code>[vA, vB]</code>。处理 C 时计算新 <code>qC、kC、vC</code>，将新 K/V 加入缓存，用 <code>qC</code> 与 <code>kA、kB、kC</code> 计算权重，再读取 <code>vA、vB、vC</code>；下一步 D 同理。缓存避免对旧位置重复计算 K/V，注意力仍要读取它们，缓存也会随上下文增长。</p>
+<p>旧的 <code>qA、qB</code> 已用于计算它们各自位置的输出。因果生成中旧位置不关注未来位置，追加 C 不需要重新计算 A、B 的注意力输出；D 需要的是新算的 <code>qD</code>。因此普通增量解码不需要保存旧 Q，并非 Q 在技术上无法缓存：若另一个算法要重算旧输出、做诊断或处理非因果注意力，是否缓存取决于其计算需求。缓存成立依赖模型权重和已处理前缀等条件不变；改变它们需重新计算受影响状态。</p>
+<h3 id="tokenizer-适配与字节级表示">Tokenizer 与模型制品</h3>
+<span id="tokenizer-端到端实例"></span><p>Tokenizer 的程序、Qwen 词表与模板的分工，以及本机“你好”的加载、编码、解码实例，统一见 <a href="tokenizers-and-transformers.html">Tokenizer 与 Transformers</a>。输入对照中曾出现的容器误判见 <a href="fixed-model-numerical-validation.html#6-真实模型中的误差定位与验证设计调整">数值诊断案例</a>。</p>
+<h2 id="2-不同目的会用到哪些组件">2. 不同目的会用到哪些组件</h2>
+<figure class="diagram"><div class="graph-scroll"><svg role="img" aria-label="流程图" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1395 405" width="1395" height="405"><defs><marker id="arrow3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#526c89"/></marker></defs><path d="M190,63 C208,63 207,63 225,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow3)"/><path d="M385,63 C403,63 402,63 420,63" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow3)"/><path d="M190,313 C208,313 207,313 225,313" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow3)"/><path d="M385,313 C403,313 402,313 420,313" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow3)"/><path d="M580,63 C598,63 597,188 615,188" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow3)"/><path d="M580,313 C598,313 597,188 615,188" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow3)"/><path d="M775,188 C793,188 792,188 810,188" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow3)"/><path d="M970,188 C988,188 987,188 1005,188" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow3)"/><path d="M1165,188 C1183,188 1182,188 1200,188" fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#arrow3)"/><rect x="30" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="110" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="110" dy="0">文字消息</tspan></text><rect x="225" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="305" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="305" dy="0">tokenizer 与模板</tspan></text><rect x="420" y="30" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="500" y="59" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="500" dy="0">文本 embedding</tspan></text><rect x="30" y="280" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="110" y="309" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="110" dy="0">图片或视频帧</tspan></text><rect x="225" y="280" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="305" y="309" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="305" dy="0">预处理与视觉编码器</tspan></text><rect x="420" y="280" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="500" y="309" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="500" dy="0">merger 与视觉位置组织</tspan></text><rect x="615" y="155" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="695" y="184" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="695" dy="0">按输入位置组合表示</tspan></text><rect x="810" y="155" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="890" y="184" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="890" dy="0">同一套 32 层语言主干</tspan></text><rect x="1005" y="155" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="1085" y="184" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="1085" dy="0">最终归一化与共享词表投影</tspan></text><rect x="1200" y="155" width="160" height="66" rx="9" fill="#fff" stroke="#819cba"/><text x="1280" y="184" text-anchor="middle" font-size="13" fill="#17263b"><tspan x="1280" dy="0">文字 token 与文本解码</tspan></text></svg></div><details><summary>查看图的原始定义</summary><pre><code>flowchart LR
+  T[文字消息] --&gt; K[tokenizer 与模板]
+  K --&gt; E[文本 embedding]
+  I[图片或视频帧] --&gt; P[预处理与视觉编码器]
+  P --&gt; M[merger 与视觉位置组织]
+  E --&gt; C[按输入位置组合表示]
+  M --&gt; C
+  C --&gt; B[同一套 32 层语言主干]
+  B --&gt; H[最终归一化与共享词表投影]
+  H --&gt; O[文字 token 与文本解码]
+</code></pre></details></figure>
+<p>图中是任务连接示意；视频还涉及帧采样、时间维度与位置组织，不能把图像简单改名为视频就算完成处理。</p>
+<table>
+<thead>
+<tr>
+<th>使用目的</th>
+<th>参与路径</th>
+<th>不能由此推断什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>纯文本问答、抽取、生成</td>
+<td>模板/tokenizer → embedding → 语言主干 → 词表投影 → 解码</td>
+<td>不要求视觉输入，也不要求 MTP 分支参与</td>
+</tr>
+<tr>
+<td>图片问答、OCR、视频理解</td>
+<td>视觉预处理/编码/合并，与文字表示组合，再经语言主干输出文字</td>
+<td>有视觉权重不等于预处理、位置编码和运行接口已经接好</td>
+</tr>
+<tr>
+<td>纯文本 SFT/LoRA</td>
+<td>文本路径，加监督 loss、反向传播与优化器更新</td>
+<td>不因只训练 adapter 就省去基础模型计算；是否冻结哪些模块由训练方案决定</td>
+</tr>
+<tr>
+<td>MTP 相关训练或解码</td>
+<td>语言主路径配合辅助分支和专门算法</td>
+<td>权重文件里有 MTP 不代表运行器已启用，更不证明已有加速收益</td>
+</tr>
+<tr>
+<td>原生像素图像生成</td>
+<td>这个固定模型未提供相应生成头/生成网络和图像解码路径</td>
+<td>会读图不说明会画图；通用图像生成架构见多模态笔记</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-为什么能精确选出-text-部分还能不加载视觉mtp">3. 为什么能精确选出 text 部分，还能不加载视觉/MTP</h2>
+<p>权重是带名称、shape、dtype 的张量集合，模型代码定义这些张量的用途，配置定义尺寸和连接。原始索引中的 <code>model.language_model.*</code>、<code>model.visual.*</code>、<code>mtp.*</code> 给出模块归属；两个 safetensors 文件只是存储分片，两片都可能包含语言参数，不能按文件把一片叫语言模型、另一片叫视觉模型。</p>
+<p>纯文本前向从 embedding 到词表输出形成完整路径，不消费视觉编码输出，也不必经过 MTP 分支。因此可只构造语言网络，收集两片文件中属于它的张量，再核对名称、形状、dtype 和集合完整性。名称筛选提供参数边界，代码及数值验证确认保留路径确实可运行。</p>
+<p>这不适用于任意删层：移除语言主干中的一层，即使 shape 仍能接起来，函数也改变了。省略视觉分支也没有撤销多模态训练曾对共享语言权重产生的影响；它只使本次执行不再读取视觉输入。</p>
+<p>要区分“不调用”“不加载”和“从磁盘删除”：不调用可能仍让权重占内存；不构造、不加载才能避免该分支持有运行参数；磁盘保留完整官方源则是材料管理，源文件存在不表示视觉组件驻留 GPU。</p>
+<h2 id="4-本项目下载和使用的是哪些部分">4. 本项目下载和使用的是哪些部分</h2>
+<p>以下是 2026-10-27 这次案例中的目录与材料，不作为长期路径或当前状态的第二份规范；操作入口统一见 <a href="../../docs/model-validation.md">正式短验证文档</a>。</p>
+<table>
+<thead>
+<tr>
+<th>材料</th>
+<th>本次位置</th>
+<th>内容与作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>官方源</td>
+<td><code>runs/models/qwen35-4b-official/</code></td>
+<td>完整两片原始权重：语言 426、视觉 297、MTP 15 个张量；约 8.7 GiB，作为转换输入</td>
+</tr>
+<tr>
+<td>活动语言制品</td>
+<td><code>runs/models/qwen35-4b-text-4bit/</code></td>
+<td>语言参数经适配及 affine 4-bit/group-64 量化，含 tokenizer 等约 2.23 GiB；正式 C++ 读取该制品</td>
+</tr>
+<tr>
+<td>复现副本</td>
+<td><code>runs/models/qwen35-4b-text-4bit-repro/</code></td>
+<td>从同一官方源重新转换，另带逐参数审计和转换器身份，供比较，不自动替代活动制品</td>
+</tr>
+</tbody>
+</table>
+<p>源目录同时包含 tokenizer、词表、聊天模板、配置和许可证，但没有下载远端仓库所有附属文件，例如图像/视频预处理配置。因此“完整原始权重已下载”与“完整多模态使用环境已准备好”是两种判断。本次没有下载 9B 权重。</p>
+<h2 id="5-名称布局与数值表示为什么改变">5. 名称、布局与数值表示为什么改变</h2>
+<p>这条链路是：</p>
+<pre><code class="language-text">Qwen 官方源权重
+  → 选取语言参数
+  → MLX-LM 命名、布局和归一化约定适配
+  → MLX affine 4-bit/group-64 量化
+  → 语言执行制品
+</code></pre>
+<p>模型参数来源是 Qwen；适配规则主要来自 <a href="https://github.com/ml-explore/mlx-lm/blob/v0.32.2/mlx_lm/models/qwen3_5.py">MLX-LM 0.32.2 的 Qwen3.5 sanitizer</a>，加载、量化和保存沿用 <a href="https://github.com/ml-explore/mlx-lm/blob/v0.32.2/mlx_lm/utils.py">上游 utils</a>。它们不是 Qwen 原始权重文件，也不是项目手工猜测出来的修改。项目负责固定来源、资源预检、语言制品范围、文件复制、清单和审计。</p>
+<h3 id="名称映射是模块路径适配">名称映射是模块路径适配</h3>
+<p>例如 <code>model.language_model.layers.0...</code> 变为 <code>language_model.model.layers.0...</code>。名称告诉加载器把张量放到哪个模块；改前缀本身不改变矩阵数值。名称一致仍不保证语义一致，后续必须核对布局与算子约定。</p>
+<h3 id="转轴保留元素却改变算子读取的维度含义">转轴保留元素，却改变算子读取的维度含义</h3>
+<p>24 个卷积权重从 <code>[8192, 1, 4]</code> 转为 <code>[8192, 4, 1]</code>，通过移动轴 2 到轴 1 完成，适配 MLX 卷积要求。不能只修改 shape 元数据来假装完成任意转置；必须遵照元素与维度的实际映射。在这个特定例子中，有一个维度为 1，但规则依据仍是源/目标算子的轴约定。</p>
+<h3 id="特定-rmsnorm-加一是在保持计算语义">特定 RMSNorm 加一是在保持计算语义</h3>
+<p>源侧某些归一化参数使用偏移表示，示意为：</p>
+<pre><code class="language-text">源计算：y = normalize(x) × (1 + w_source)
+目标计算：y = normalize(x) × w_target
+所需映射：w_target = 1 + w_source
+</code></pre>
+<p>所以数值发生变化，却是在适配同一个期望计算，不是通过训练增加新知识。上游在识别原始卷积布局后，对指定的 81 个一维归一化权重执行加一，不是给所有带 norm 名称的参数加一。已转换权重不能再无条件套一次，否则相当于额外偏移。</p>
+<h3 id="量化是有损表示变换">量化是有损表示变换</h3>
+<p>本例把 249 个矩阵各转成 packed weight、scales、biases。uint32 可打包 8 个 4-bit 编码，每 64 个输入方向元素共享一组缩放和偏置；还原可示意为 <code>近似权重 = scale × 编码 + bias</code>，精确规则由 MLX 格式决定。因此：</p>
+<pre><code class="language-text">输出张量数 = 原语言张量 426 + 249 × 2 = 924
+</code></pre>
+<p>张量数量增加不表示模型多了层。最终 2.23 GiB 也不是单靠删除视觉组件获得的：原始语言张量仍约 7.83 GiB，主要压缩来自量化。量化会引入近似，没有使用样本、loss 和梯度训练；SFT/LoRA 才按训练目标更新被选参数，两者不能混称。</p>
+<h2 id="6-怎样让转换过程可审查可复现">6. 怎样让转换过程可审查、可复现</h2>
+<p>只写“用了某版本库”不足以让人看懂具体变化。应同时保存输入身份、转换规则、实际代码身份、逐参数变化和输出摘要，并在新目录重跑比较；大权重本身不必进 Git。</p>
+<p>本案例的 <a href="../../tools/model_artifacts/qwen35/qwen35_conversion_rules.json">规则文件</a>、<a href="../../tools/model_artifacts/qwen35/prepare_qwen35.py">准备脚本</a>、<a href="../../tools/model_artifacts/qwen35/qwen35_conversion.py">审计代码</a> 和 <a href="../../tools/model_artifacts/qwen35/verify_qwen35_reproduction.py">复现比较器</a> 把这些信息显式化。实际变换仍调用已知正常的上游主路径，审计核对结果，而不是另写一套转换偷偷取代它。</p>
+<p>2026-10-27 已从同一官方源完整重跑，权重、索引、配置及附属材料共 9 个文件与原制品逐字节一致；新生成的规则副本、转换器身份和审计文件本应不同，artifact 清单也随之不同。源文件转换前后的 SHA-256 保持一致。该观察支持“这份脚本在固定环境复现了原制品”，不证明量化与 BF16 完全等价，也不承诺其他硬件或版本仍逐字节一致。</p>
+<p>当前 C++ 与独立参考比较的是同一量化制品，主要验证执行实现；评价量化损失还需要原始 BF16 对照及独立任务效果。前向一致也不能替代目标训练梯度和恢复验证。操作命令、当前证据和验收边界仍分别由正式文档与快照维护。</p>
+<h2 id="复习问题">复习问题</h2>
+<ul>
+<li>为什么两片 safetensors 不能解释为两个独立模型？</li>
+<li>不加载视觉组件为什么不等于把多模态训练影响从语言参数中移除？</li>
+<li>rename、转轴、归一化加一、量化分别在改变什么，哪一步明确属于有损近似？</li>
+<li>426 个语言张量变成 924 个，为什么模型没有增加层？</li>
+<li>九个文件复现一致与量化效果无损，是哪两种不同的结论？</li>
+</ul>
+
+</main></body></html>

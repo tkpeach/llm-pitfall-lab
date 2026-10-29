@@ -59,7 +59,7 @@ gold 文件沿用 `fixtures/task_contract.json` 的数组格式，每条恰好�
 
 当前 `fixtures/task_contract.json` 是手写合成规则样例，可供本项目使用，不含用户私有业务数据。它仅验证任务契约、评估器与命令，不用于宣称训练效果或泛化。
 
-当前优先扩大独立、可信的评估数据，维持已实现的严格计分。错误分类、precision/recall/F1、语义裁判等保留为 [方法参考](../learning/topics/evaluation-and-gold.md)，按后续真实需求考虑，不在本轮增加验收范围。
+当前优先扩大独立、可信的评估数据，维持已实现的严格计分。错误分类、precision/recall/F1、语义裁判等保留为 [方法参考](../learning/topics/evaluation-and-gold.html)，按后续真实需求考虑，不在本轮增加验收范围。
 
 [评估种子集 v1](../fixtures/order-evaluation/v1/README.md) 提供 52 条原创合成候选样本，按 26 个订单/改写组隔离为 dev 与 test 候选，各 26 条。它记录来源、规则标签、逐字段证据或缺失理由、版本与哈希；独立人工复核和测试冻结尚未完成，不能称作已验收的真实业务测试集。原六条契约样例继续单独保留。
 

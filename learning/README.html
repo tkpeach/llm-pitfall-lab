@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>学习笔记</title><style>html{color-scheme:light dark}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.75;margin:0 auto;max-width:1050px;padding:24px;color:#222;background:#fafafa}a{color:#205ab1}h1,h2,h3,h4{line-height:1.35;scroll-margin-top:1em}h2{border-bottom:1px solid #ccd3dc;padding-bottom:.35em;margin-top:2em}pre{overflow:auto;padding:1em;background:#edf1f5;border-radius:8px}code{font-family:ui-monospace,monospace}table{border-collapse:collapse;display:block;overflow:auto}th,td{border:1px solid #bbc4cf;padding:.5em;vertical-align:top}th{background:#e7edf3}blockquote{border-left:4px solid #b1bdcc;padding-left:1em;color:#555}.diagram{margin:1em 0;padding:1em;background:#eff4fb;border:1px solid #c4d2e2;border-radius:8px}.diagram-edges{display:grid;gap:.55em}.edge{display:flex;align-items:center;gap:.6em}.node{display:inline-block;border:1px solid #819cba;border-radius:7px;background:#fff;padding:.35em .7em;min-width:7em;text-align:center}.arrow{color:#305c8c;display:flex;flex-direction:column;text-align:center}.arrow small{font-size:.75em}details{margin-top:.8em;font-size:.85em} @media(prefers-color-scheme:dark){body{background:#171a1f;color:#e4e8ee}a{color:#9dc2ff}pre,th{background:#262c34}blockquote{color:#b6beca}.diagram{background:#222c38;border-color:#45556b}.node{background:#202831;border-color:#68809d}.arrow{color:#a1c9ff}}</style></head><body><main>
+<h1 id="学习笔记">学习笔记</h1>
+<p>这里整理你在项目中提出的问题及讨论出的知识点，帮助理解、复习和继续追问。项目做到哪里看 <a href="../docs/status.md">仓库现状</a>，如何构建和运行看 <a href="../docs/build.md">操作指南</a>。本目录关注知识内容，不重复维护项目状态。</p>
+<h2 id="主题索引">主题索引</h2>
+<p>模型相关内容统一从 <a href="topics/model-knowledge-guide.html">模型知识导读</a> 阅读：先理解通用组件与任务路径，再看 Qwen3.5-4B 专题、SFT/LoRA 和数值诊断实践。下表保留各篇直接入口。</p>
+<table>
+<thead>
+<tr>
+<th>笔记</th>
+<th>对应问题</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><a href="topics/tokenizers-and-transformers.html">Tokenizer 与 Transformers</a></td><td>消息、聊天模板、词表和字节级 BPE 如何产生 token IDs？库和模型制品分别提供什么？</td></tr>
+<tr>
+<td><a href="topics/cpp23-and-errors.html">C++23 与错误返回</a></td>
+<td><code>std::expected</code> 是什么？为什么选择 C++23？需要逐项检查标准库吗？</td>
+</tr>
+<tr>
+<td><a href="topics/build-and-testing.html">构建、测试与模块组织</a></td>
+<td>CMake、CTest、GoogleTest 分别做什么？测试名称的正则是什么意思？源文件和模块如何组织？何时采用 TDD？</td>
+</tr>
+<tr>
+<td><a href="topics/mlx-and-model-execution.html">MLX、Metal 与模型执行</a></td>
+<td>MLX 是 Python 实现的吗？C++ 如何调用？Metal 做什么？MLX-LM 应该直接使用还是参考实现？辅助环境与锁文件有什么用？</td>
+</tr>
+<tr>
+<td><a href="topics/fixed-model-numerical-validation.html">固定模型数值对照</a></td>
+<td>如何从权重制品、低精度接口和混合缓存提出假设、验证并定位差异？</td>
+</tr>
+<tr>
+<td><a href="topics/multimodal-backbones-and-image-generation.html">多模态主干与图像生成</a></td>
+<td>图文共享几个主干？读图与画图的网络如何连接？两种模态是否只在 embedding 上不同？</td>
+</tr>
+<tr>
+<td><a href="topics/qwen35-components-and-weight-conversion.html">Qwen3.5-4B：组件、任务路径与权重转换</a></td>
+<td>固定 Qwen 有哪些组件？如何选出语言参数？实际下载/加载什么？名称、布局、归一化和量化为什么改变，如何追溯与复现？</td>
+</tr>
+<tr>
+<td><a href="topics/sft-lora-and-weight-updates.html">SFT、LoRA 与权重更新</a></td>
+<td>SFT 与 LoRA 有何区别？冻结权重如何仍参与训练？adapter 如何改变模型行为？</td>
+</tr>
+<tr>
+<td><a href="topics/evaluation-and-gold.html">Gold 与 LLM 评估</a></td>
+<td>严格匹配能衡量什么？业界如何比较字段、诊断错误和设计独立评估？</td>
+</tr>
+<tr>
+<td><a href="topics/posix-signals-and-sigaction.html">POSIX 信号与 <code>sigaction</code></a></td>
+<td><code>sigaction</code> 如何注册处理规则？信号如何递送？<code>sa_mask</code>、<code>sa_flags</code> 和 async-signal-safe 有什么作用？</td>
+</tr>
+</tbody>
+</table>
+<p>这些内容已在讨论中解释，不据此推断你已经掌握或亲手实践；笔记末尾的问题可用于自查，有疑问时继续补充解释。</p>
+<h2 id="维护方式">维护方式</h2>
+<p><strong>格式：</strong> <code>learning/</code> 下新增和维护的学习文档、索引及案例统一使用 HTML 格式；已有主题直接维护 HTML，不另建 Markdown 副本。新增主题或案例时更新对应索引，保持相对链接与章节锚点可用。图示应支持本地离线浏览。正式文档链接直接指向 Markdown 源文件。</p>
+<ul>
+<li><strong>自动筛选范围：</strong> 本仓库对话中，每当用户追问“是什么、为什么、如何工作”，或讨论了可迁移的技术原理、API/系统机制、方法取舍与适用边界，助手应自动判断是否值得固化；用户明确要求整理时直接执行。无需等用户再次提出“记笔记”。</li>
+<li><strong>不收录的内容：</strong> 仅针对本项目的架构方案、实现是否符合用户偏好、需求取舍、当前状态/计划、命令执行结果及普通改动说明，不作为知识笔记。若一段讨论同时包含项目决策和通用原理，只提炼通用原理，项目决定链接到 <code>docs/</code> 或源码，不转写为个人知识结论。</li>
+<li><strong>代码答疑的边界：</strong> 针对具体函数、局部变量、调用关系或实现选择的代码说明，默认在对话中回答，不自动归档；用户明确指出某次回答不整理时照办。普遍适用的概念和机制，以及用户要求保留的模型知识，仍按上述规则筛选和整理，不因涉及代码而一概排除。</li>
+<li><strong>具体模型知识属于学习内容：</strong> 固定模型的组件关系、计算路径、参数语义、格式转换及适用边界，可作为专门案例归档；不能因其与本项目使用的模型有关，就一概当成项目状态排除。机制与解释写入主题笔记，实时路径、操作命令和验收状态链接到正式文档。</li>
+<li><strong>先合并再新增：</strong> 每次整理前查看本索引并搜索相关主题笔记。已有主题就补充对应章节，避免另开近义笔记；只有现有主题无法自然容纳时才新建，并同步本索引。术语、例子或边界有修正时，直接修订原内容，保持一个权威位置。</li>
+<li><strong>固化内容：</strong> 围绕用户实际问题写清概念、工作机制、因果关系、示例、取舍和适用边界；对话中的项目实现可作例子并链接源码，但不把一次实现或测试通过泛化成普遍结论。必要时附少量复习问题，不复制聊天流水，也不推断用户已掌握。</li>
+<li><strong>回答与笔记分别交付：</strong> 知识问题先在对话中针对用户的问题给出自足、可直接阅读的解释和必要例子；随后将值得保留的解释整理进主题笔记，可结合已有内容扩展。最终回复必须包含实际回答，不能以“已更新笔记”或链接代替；同时简短指出笔记位置。若用户明确只要求编辑笔记，按其具体要求处理。内容仍待确认时先回答并说明不确定性，笔记按处理时机收束。</li>
+<li><strong>处理时机：</strong> 优先在相关知识讨论形成完整解释后更新笔记；若讨论仍在进行，先回答当前问题，再于该主题收束时合并，避免写入尚未确认的临时说法。纯项目实现任务不因此额外生成学习笔记。</li>
+<li><strong>收束核对：</strong> 本轮形成完整知识解释后，按实际问题核对已有章节是否覆盖；混合实现任务也要核对其中已解释的知识。检查正文是否真的包含解释、索引是否能找到、相关主题是否互链，不能用更新 <code>docs/</code> 或执行报告代替学习归档。最终回复简短指出新增或更新的笔记，无需另建聊天流水或重复检查表。</li>
+<li><strong>可见范围：</strong> 自动筛选依据当前对话中可见的交流和仓库现存笔记；不假定能读取其他未提供的聊天，也不在后台监听对话。</li>
+<li>以你的提问、困惑和需要学习的概念为主要来源，按主题归纳，保留机制、例子、取舍和适用边界；不照抄聊天，不写 agent 工作流水或用测试报告替代讲解。</li>
+<li>同一主题持续完善，只有值得回看的新内容才新增笔记，不按提交或阶段凑数量。概念笔记无需代码哈希、运行状态和验收标签；确有实验时才补充输入、条件、方法及观察。</li>
+<li>正式规则链接到 <code>docs/</code>，局部实现链接到源码；笔记重点解释为什么，不复制仓库状态。用户是否理解或亲手实践，以用户反馈和实际学习活动为依据。</li>
+<li><a href="pitfalls/README.html">pitfalls/</a> 保留为案例入口，暂无案例时仅维护目录说明；遇到合格问题后按下述 <a href="#pitfall-%E8%AE%B0%E5%BD%95%E8%A6%81%E6%B1%82">pitfall 记录要求</a> 收录，宁缺毋滥。</li>
+<li>常规安装问题、执行权限、agent 工具调用失误和小型检查器修补不默认属于 pitfall；除非揭示了足够重要的机制并符合上述标准。当前没有收录案例。</li>
+<li>真正有价值的失败、无收益或负收益实验应保留，但需说明问题和结论。复现仍遵守项目资源限制，大日志与权重不提交本目录。</li>
+</ul>
+<h2 id="pitfall-记录要求">pitfall 记录要求</h2>
+<h3 id="收录与及时保存">收录与及时保存</h3>
+<p>案例必须真实发生、有明确影响，涉及需要诊断或权衡的实质原因，并有助于用户理解机制、复习排查方法或避免再次发生。不能为填充目录制造故障或把日常操作包装成案例；未解决的问题可记录为调查中，根因假设不能写成确定结论。</p>
+<p>当问题符合标准且仍可触发时，先保存最小输入、触发条件和关键失败结果，再修复。不得等解决后只留下修复答案。普通工作中的临时错误仍不必逐项归档。</p>
+<h3 id="每篇案例的内容">每篇案例的内容</h3>
+<table>
+<thead>
+<tr>
+<th>内容</th>
+<th>要求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>背景、症状与影响</td>
+<td>说明实际场景、预期行为、异常表现和为什么值得解决</td>
+</tr>
+<tr>
+<td>最小输入与触发条件</td>
+<td>保留必要的小型样例或确定的生成方法，说明是否依赖随机性、精度、序列长度等条件</td>
+</tr>
+<tr>
+<td>代码与环境身份</td>
+<td>记录故障及修复版本、依赖、配置和相关软硬件；优先使用可检出的 commit。未提交代码须保存必要示例或补丁，不能只给无法恢复内容的哈希</td>
+</tr>
+<tr>
+<td>排查与关键证据</td>
+<td>保留有判断价值的观察、假设及排除过程，区分事实与推测，不复制完整工具流水</td>
+</tr>
+<tr>
+<td>根因与修复</td>
+<td>解释机制、修改为何有效及适用边界；保留必要的失败、无收益或负收益对照。未确认则明确写出缺口</td>
+</tr>
+<tr>
+<td>操作与判断标准</td>
+<td>分别列出触发故障和验证修复的步骤、命令、预期结果与判断标准；数值问题注明容差，性能问题注明负载和测量条件</td>
+</tr>
+<tr>
+<td>复现能力与限制</td>
+<td>按下表标注材料支持的能力，注明验证日期、已执行与未执行的步骤、缺失条件及资源成本</td>
+</tr>
+</tbody>
+</table>
+<p>案例应能够独立回看，不依赖旧聊天、已覆盖的当前证据快照或可能清理的本机日志。必要的小型结果内嵌或随案例保存，相关知识链接到主题笔记；大产物仍按资源规则管理。</p>
+<h3 id="复现能力标注">复现能力标注</h3>
+<p>以下能力分别标注，不用一个“已验证”概括，也不表示用户已经掌握：</p>
+<table>
+<thead>
+<tr>
+<th>能力</th>
+<th>标注依据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>可回看分析</td>
+<td>背景、观察、排查和结论足以重新理解问题；缺失根因时明确标注</td>
+</tr>
+<tr>
+<td>可操作验证</td>
+<td>已保留可执行材料与判断标准；说明验证的是机制还是修复，以及哪些步骤实际执行过</td>
+</tr>
+<tr>
+<td>可重现原始故障</td>
+<td>在记录的条件下实际重新触发过相同故障，并保留失败判据；仅提供命令或修复后测试通过不满足此项</td>
+</tr>
+</tbody>
+</table>
+<p>修复后的回归检查与原始故障复现必须分开。尚未重新触发的命令标为待验证；旧设备、驱动、依赖或代码缺失时，标为条件受限或不可复现，不能承诺完整重现。后续条件变化时更新适用性，不把曾经可复现改写为当前必现。</p>
+<h3 id="材料与执行边界">材料与执行边界</h3>
+<ul>
+<li>小型机制问题优先保留独立最小示例，显式展示错误行为与正确行为；不把故障开关加入正式执行主路径。</li>
+<li>真实模型问题记录固定权重来源、revision、配置和必要校验信息，保留少量输入与结果；不默认长期保留大权重、激活或完整检查点。</li>
+<li>历史问题需要旧代码时，在独立目录按对应版本操作，避免覆盖当前工作区；复现前核对环境和预计时间、磁盘与内存开销，遵守项目暂停与资源规则。</li>
+<li>不为重现而修改系统 GPU/交换设置或破坏正常执行路径；无法满足条件时如实保留分析和修复验证，不降低复现标注标准。</li>
+</ul>
+
+</main></body></html>

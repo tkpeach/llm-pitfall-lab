@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tokenizer 与 Transformers：从消息到 token ID</title><style>
+html{color-scheme:light dark}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.8;margin:auto;max-width:1000px;padding:24px;color:#222;background:#fafafa}a{color:#205ab1}h1,h2,h3{line-height:1.35;scroll-margin-top:1em}h2{border-bottom:1px solid #ccd3dc;margin-top:2em;padding-bottom:.35em}pre{overflow:auto;padding:1em;background:#edf1f5;border-radius:8px}code{font-family:ui-monospace,monospace}table{border-collapse:collapse;display:block;overflow:auto}th,td{border:1px solid #bbc4cf;padding:.5em;vertical-align:top}th{background:#e7edf3}.flow{display:flex;flex-wrap:wrap;gap:.5em;align-items:center;padding:1em;background:#eff4fb;border:1px solid #c4d2e2;border-radius:8px}.box{border:1px solid #819cba;background:#fff;border-radius:6px;padding:.45em}.arrow{font-size:1.3em;color:#305c8c}.note{border-left:4px solid #7e9dbc;padding-left:1em}@media(prefers-color-scheme:dark){body{background:#171a1f;color:#e4e8ee}a{color:#9dc2ff}pre,th{background:#262c34}.flow{background:#222c38;border-color:#45556b}.box{background:#202831}.arrow{color:#a1c9ff}}
+</style></head><body><nav><a href="../README.html">← 学习笔记目录</a> · <a href="model-knowledge-guide.html">模型知识导读</a></nav><main>
+<h1>Tokenizer 与 Transformers：从消息到 token ID</h1>
+<p>本篇回答：tokenizer 使用什么数据、如何加载并处理文本，为什么已有规则仍需要执行程序，以及字节表示和模型输入有什么区别。通用机制与 Qwen3.5-4B 的本机观察分别标明；模型结构见 <a href="qwen35-components-and-weight-conversion.html">Qwen 专题</a>，接入故障及验证见 <a href="fixed-model-numerical-validation.html#6-真实模型中的误差定位与验证设计调整">数值对照</a>。</p>
+<h2 id="boundary">1. 一条消息经历哪些组件</h2>
+<figure class="flow" style="display:block;overflow-x:auto"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flowtitle flowdesc" viewBox="0 0 940 560" style="display:block;min-width:660px;width:100%;height:auto"><title id="flowtitle">Tokenizer 与模型完整流程</title><desc id="flowdesc">消息经聊天模板和 tokenizer 编码，模型计算和生成策略选择输出 ID，再经 tokenizer 解码。右侧显示各步骤使用的文件和程序。</desc><defs><marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#526c89"/></marker></defs><g fill="none" stroke="#526c89" stroke-width="2" marker-end="url(#flow-arrow)"><path d="M230 83 V100 M230 153 V170 M230 223 V240 M230 293 V310 M230 363 V380 M230 433 V450"/><path d="M680 126 H430 M680 196 H430 M680 266 H430 M680 336 H430 M680 406 H430 M680 476 H430"/></g><g fill="#fff" stroke="#819cba"><rect x="30" y="30" width="400" height="53" rx="8"/><rect x="30" y="100" width="400" height="53" rx="8"/><rect x="30" y="170" width="400" height="53" rx="8"/><rect x="30" y="240" width="400" height="53" rx="8"/><rect x="30" y="310" width="400" height="53" rx="8"/><rect x="30" y="380" width="400" height="53" rx="8"/><rect x="30" y="450" width="400" height="53" rx="8"/><rect x="680" y="100" width="235" height="53" rx="8"/><rect x="680" y="170" width="235" height="53" rx="8"/><rect x="680" y="240" width="235" height="53" rx="8"/><rect x="680" y="310" width="235" height="53" rx="8"/><rect x="680" y="380" width="235" height="53" rx="8"/><rect x="680" y="450" width="235" height="53" rx="8"/></g><g fill="#17263b" font-family="sans-serif" font-size="15" text-anchor="middle"><text x="230" y="62">用户消息：role + content</text><text x="230" y="132">聊天模板 → 组织带标记的文本</text><text x="230" y="202">预处理、ByteLevel、BPE → token IDs</text><text x="230" y="272">embedding 查表 → 输入向量</text><text x="230" y="342">模型各层 → logits</text><text x="230" y="412">生成策略 → 选择输出 token ID</text><text x="230" y="482">tokenizer 解码 → 输出文字</text><text x="797" y="132">chat_template.jinja</text><text x="797" y="202">tokenizer.json + 库代码</text><text x="797" y="272">模型 embedding 权重</text><text x="797" y="342">模型权重 + 前向实现</text><text x="797" y="412">贪心或采样等生成策略</text><text x="797" y="482">tokenizer 词表 + decoder</text></g></svg><figcaption>右侧是各步骤使用的主要材料；一次生成通常重复模型前向与选 token。本页“你好”只实测 tokenizer 输入往返，模型回答部分是流程说明。</figcaption></figure>
+<p>Tokenizer 主要把输入文字转换为 token ID，并可把 ID 解码为文字；它不选择模型下一步输出。模型用 embedding 权重把输入 ID 变成向量，计算 logits，再由生成策略选出输出 ID。Tokenizer 的词表、合并规则和模板是数据与配置，不是语言模型的神经网络权重。</p>
+<h2 id="sources">2. 程序、模型文件和适配的关系</h2>
+<table><thead><tr><th>来源</th><th>提供的内容</th><th>用途</th></tr></thead><tbody>
+<tr><td>Transformers / tokenizers 库</td><td>AutoTokenizer、模板处理、通用 BPE、ByteLevel、解码等程序</td><td>加载配置并执行规则；模型专用类可组合通用组件、处理接口差异。</td></tr>
+<tr><td>模型制品</td><td>词表、合并规则、预处理配置、特殊 token、聊天模板</td><td>确定这个模型使用什么规则及各 token 的 ID。</td></tr>
+<tr><td>语言模型权重和实现</td><td>embedding、各层权重及计算代码</td><td>接收 ID，执行模型前向；与 tokenizer 数据相互匹配。</td></tr>
+</tbody></table>
+<p>新的权重如果沿用已支持的架构和 tokenizer，不必为每个模型重新编写或合入 Transformers；新的架构或特殊处理可在本地实现、注册，或提供自定义代码，也可贡献到通用库。Auto 类依据配置与注册映射选择实现。远程自定义代码需要明确允许，并检查来源。参见 <a href="https://huggingface.co/docs/transformers/custom_models">Hugging Face 自定义模型</a>。</p>
+<p>模型文件与运行程序不是同一件事：一份新权重可能使用已有结构，不要求新增架构代码；真正改变层的计算方式或接口时则需要兼容实现。常见 Transformer 结构有 encoder-only、decoder-only、encoder–decoder，但这些是数据流大类，不保证同类模型的层、权重布局和 tokenizer 可以互换。Qwen3.5 的 GDN 与全注意力交错就是更具体的结构，见 <a href="qwen35-components-and-weight-conversion.html">Qwen 专题</a>。在本项目中 MLX-LM 是参考实现，C++/MLX 组织正式前向；Python tokenizer 为对照准备输入和解码报告，并不在正式 C++ 前向中执行。</p>
+<h2 id="files">3. 本地 Qwen 制品如何加载</h2>
+<p>以下是本机 Qwen3.5-4B 执行制品与 Transformers 5.20.2 的观察，路径及当前边界以 <a href="../../docs/model-validation.md">正式验证说明</a> 为准：</p>
+<pre><code>tokenizer = AutoTokenizer.from_pretrained(
+    artifact, local_files_only=True, trust_remote_code=False
+)</code></pre>
+<table><thead><tr><th>文件</th><th>具体内容和作用</th></tr></thead><tbody>
+<tr><td><code>config.json</code></td><td>含 <code>model_type: qwen3_5</code>，参与自动类型选择。</td></tr>
+<tr><td><code>tokenizer_config.json</code></td><td>声明 <code>tokenizer_class: Qwen2Tokenizer</code>，还包含 EOS、padding 等设置。实际对象为 Transformers 的 <code>Qwen3_5Tokenizer</code>；配置、注册映射和安装版本共同决定结果。</td></tr>
+<tr><td><code>tokenizer.json</code></td><td>包含 NFC、预切分和 ByteLevel 配置，BPE 词表与合并规则、特殊 token、decoder 等。</td></tr>
+<tr><td><code>chat_template.jinja</code></td><td>消息及生成前缀的模板；本机加载后 <code>tokenizer.chat_template</code> 与文件内容相同。</td></tr>
+<tr><td><code>vocab.json</code>、<code>merges.txt</code></td><td>单独提供词表和合并规则；与 tokenizer.json 内容有重叠。不能仅凭文件存在断定每次加载均分别读取这些文件。</td></tr>
+</tbody></table>
+<p><code>local_files_only=True</code> 限制本地加载，<code>trust_remote_code=False</code> 不启用仓库自定义远程代码。当前 Qwen 类来自安装的 Transformers 包，继承通用 TokenizersBackend，使用通用 BPE 与 ByteLevel 组件；不能据类名推断每个权重都有独立实现。</p>
+<p><strong>把加载理解为组装：</strong>AutoTokenizer 读取目录中的配置，并结合本版本 Transformers 的注册映射选择类；选出的类及通用后端按文件内容组织词表、规则、特殊 token 和 decoder；聊天模板作为模板内容附到对象。加载时还没有传入“你好”，也没有运行模型。<code>from_pretrained</code> 的对象是 tokenizer，不因名字含 pretrained 就表示加载语言模型权重。Transformers 是本机辅助环境中的 Python 库，当前锁文件显示它由 MLX-LM 的依赖链引入；Qwen 目录提供数据，而不是当前使用的 Transformers 程序代码。</p>
+<pre><code>程序：Transformers + tokenizers
+         +
+制品：config.json / tokenizer_config.json / tokenizer.json / chat_template.jinja
+         ↓ 加载并组织
+对象：模板 + 分词规则 + 特殊 token + 编码 / 解码方法</code></pre>
+<p>本机安装版本的类源码位于 <code>.venv/lib/python3.12/site-packages/transformers/models/qwen3_5/tokenization_qwen3_5.py</code>，使用通用 BPE、NFC、ByteLevel 和 TokenizersBackend；实际文件访问并未逐项跟踪。历史记录没有保留当初选择这套接口时具体参考的页面，不能把现在查阅的文档说成当时的直接依据。接口和字段的公开说明可查 <a href="https://huggingface.co/docs/transformers/main_classes/tokenizer">Transformers tokenizer 文档</a> 和 <a href="https://huggingface.co/docs/transformers/main/chat_templating">聊天模板文档</a>。</p>
+<h2 id="example">4. 端到端实例：用户说“你好”</h2>
+<p>以下 IDs 和模板文本是对上述本机固定制品的实际 tokenizer 观察；没有运行模型生成“你好”的回复。</p>
+<h3>4.1 消息到模板文本</h3>
+<pre><code>messages = [{"role": "user", "content": "你好"}]
+rendered = tokenizer.apply_chat_template(
+    messages, tokenize=False, add_generation_prompt=True,
+    enable_thinking=False,
+)</code></pre>
+<p>Transformers 使用制品的聊天模板，将角色、内容和 assistant 前缀组织为：</p>
+<pre><code>&lt;|im_start|&gt;user
+你好&lt;|im_end|&gt;
+&lt;|im_start|&gt;assistant
+&lt;think&gt;
+
+&lt;/think&gt;
+
+</code></pre>
+<p>这仍是文本。关闭 thinking 在本模板中仍产生空的 think 段；不能只编码用户句子而忽略模型前缀。模板的接口和参数见 <a href="https://huggingface.co/docs/transformers/main/chat_templating">Transformers 聊天模板文档</a>。</p>
+<h3>4.2 模板文本到 token IDs</h3>
+<pre><code>encoded = tokenizer.apply_chat_template(
+    messages, tokenize=True, return_dict=True,
+    add_generation_prompt=True, enable_thinking=False,
+)
+ids = encoded["input_ids"]
+mask = encoded["attention_mask"]</code></pre>
+<p>Tokenizer 后端根据 <code>tokenizer.json</code> 识别特殊 token，对普通文本做预处理、BPE 和查词表。本机得到：</p>
+<pre><code>input_ids = [248045, 846, 198, 109266, 248046, 198,
+             248045, 74455, 198, 248068, 271, 248069, 271]
+attention_mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]</code></pre>
+<p>其中 <code>&lt;|im_start|&gt;</code> 对应 248045，<code>&lt;|im_end|&gt;</code> 对应 248046；“你好”在这个输入中对应一个 token，ID 为 109266。不同制品和输入会得到不同结果。</p>
+<p>逐项观察时，可用 <code>tokenizer.convert_ids_to_tokens(ids)</code>，本机结果为：</p>
+<table><thead><tr><th>顺序</th><th>内部 token 表示</th><th>ID</th><th>含义</th></tr></thead><tbody>
+<tr><td>1</td><td>&lt;|im_start|&gt;</td><td>248045</td><td>user 消息起始标记</td></tr><tr><td>2</td><td>user</td><td>846</td><td>角色文本</td></tr><tr><td>3</td><td>Ċ</td><td>198</td><td>换行的内部表示</td></tr><tr><td>4</td><td>ä½łå¥½</td><td>109266</td><td>本例的“你好”</td></tr><tr><td>5</td><td>&lt;|im_end|&gt;</td><td>248046</td><td>消息结束标记</td></tr><tr><td>6</td><td>Ċ</td><td>198</td><td>换行</td></tr><tr><td>7</td><td>&lt;|im_start|&gt;</td><td>248045</td><td>assistant 消息起始标记</td></tr><tr><td>8</td><td>assistant</td><td>74455</td><td>角色文本</td></tr><tr><td>9</td><td>Ċ</td><td>198</td><td>换行</td></tr><tr><td>10</td><td>&lt;think&gt;</td><td>248068</td><td>think 段起始</td></tr><tr><td>11</td><td>ĊĊ</td><td>271</td><td>两个换行</td></tr><tr><td>12</td><td>&lt;/think&gt;</td><td>248069</td><td>think 段结束</td></tr><tr><td>13</td><td>ĊĊ</td><td>271</td><td>两个换行</td></tr></tbody></table>
+<p>完整流程中各阶段的处理者与输入输出如下：</p>
+<table><thead><tr><th>步骤</th><th>输入与处理者</th><th>使用的信息</th><th>输出</th></tr></thead><tbody><tr><td>加载</td><td>Transformers AutoTokenizer 接收本地目录</td><td>config.json、tokenizer_config.json、tokenizer.json、chat_template.jinja 及安装库代码</td><td>配置好的 tokenizer 对象</td></tr><tr><td>模板</td><td>apply_chat_template 接收 messages 和模板参数</td><td>chat_template.jinja</td><td>含 user、assistant 标记的模板文本</td></tr><tr><td>编码</td><td>tokenizers 后端接收模板文本</td><td>tokenizer.json 中的特殊 token、预处理、BPE 规则与词表</td><td>13 个 input_ids 与位置 mask</td></tr><tr><td>模型前向（本例未执行）</td><td>语言模型接收 IDs</td><td>模型 embedding 和各层权重、计算实现</td><td>隐藏状态与 logits；生成策略选择输出 ID</td></tr><tr><td>解码检查</td><td>tokenizer.decode 接收本例输入 IDs</td><td>词表及 decoder 配置</td><td>还原模板文本，不是模型回答</td></tr></tbody></table>
+<h3>4.3 ID 到模型，再回到文字</h3>
+<p>输入 IDs 进入模型，embedding 权重将每个 ID 变为 2560 维向量；13 个位置在 batch 为 1 时形状为 <code>[1, 13, 2560]</code>。模型各层计算后输出 logits；生成策略选出新 ID，tokenizer 再对新 ID 解码。此处实际只执行了输入 IDs 的往返：<code>tokenizer.decode(ids)</code> 还原上面的完整模板文本，不是模型回复。</p>
+<h2 id="bytes">5. 字符、字节、内部记号与 token</h2>
+<p>UTF-8 将文字编码为字节。当前 ByteLevel 将每个字节值映射成一个可逆 Unicode 记号，便于以字符串表达词表和合并规则；记号不是自然语言，也不是最终 token ID。字节覆盖主要来自以 256 种字节值为基础，映射本身不是多语言能力的来源，也不是字节级分词的必需实现方式。</p>
+<table><thead><tr><th>输入</th><th>UTF-8 字节</th><th>内部记号</th><th>记号数</th><th>记号再编码为 UTF-8 的字节数</th></tr></thead><tbody><tr><td>A</td><td>41</td><td>A</td><td>1</td><td>1</td></tr><tr><td>你</td><td>E4 BD A0</td><td>ä½ł</td><td>3</td><td>6</td></tr><tr><td>🙂</td><td>F0 9F 99 82</td><td>ðŁĻĤ</td><td>4</td><td>8</td></tr></tbody></table>
+<p>一字节值映射一个 Unicode 记号，但记号本身用 UTF-8 保存时可能需要多个字节。BPE 可再将多个记号组合成 token：本例“你好”是两个文字字符、六个 UTF-8 字节、六个字节记号，最终为一个 token。一个 token 也可能只表示字符的一部分，解码需先组合字节。参见 <a href="https://huggingface.co/docs/transformers/tokenizer_summary">Hugging Face 分词算法说明</a>。</p>
+<p>内部记号可理解为代号：若给字节 E4、BD、A0 分别指定 ä、½、ł，就可以写作 ä½ł，再按同一映射表还原原字节。它不具备“你”的自然语言含义。单独的 E4 也不能当作完整 UTF-8 字符 ä 来解码；记号映射和文字编码是两种不同操作。用可显示记号便于词表、规则的字符串表示及避开控制字符，并不要求所有字节级 tokenizer 都这样实现。</p>
+<h3>为什么这样设计？覆盖范围与内部表示是两个目的</h3>
+<p><strong>字节作为基础单位：</strong>Unicode 字符数量远超过 256，直接为每个可能字符准备基础词表会很大；UTF-8 则把不同语言和符号表示为 0–255 的字节序列。基础词表覆盖 256 个字节值时，未单独出现在词表中的合法文本仍可以拆成字节单位，不需要为每个新字符增加单独条目。前提是 tokenizer 确实覆盖这些字节并且预处理不丢弃输入；这不保证 token 数少，也不保证模型懂这些文字。</p>
+<p><strong>映射成可显示的内部记号：</strong>某些原始字节对应控制字符或不适合作为单独的文本字符；这套实现为每个字节选取可逆 Unicode 代号，便于以字符串保存词表项、表达合并规则并调试。它只是表示方式，不增加可表达的信息，也不是“把 3 字节压缩为 3 字节”。可以设计直接操作字节的实现，不必使用这层记号。</p>
+<pre><code>文字「你」 → UTF-8 字节 E4 BD A0 → 记号 ä ½ ł → 按规则分词 / 查 ID
+                         可逆映射 ←─────────────┘
+字节给出有限的基础单位；记号仅让这些字节适合该实现的字符串处理。</code></pre>
+<h2 id="bpe">6. BPE 训练和使用的区别</h2>
+<p>训练 tokenizer 时，从数据中确定词表与合并规则；使用训练好的 tokenizer 时，这些规则固定，程序仍要按规则切分新输入。示意：已保存规则 <code>a + b → ab</code>、<code>ab + c → abc</code>，输入 <code>abc</code> 可依次切成 <code>a | b | c → ab | c → abc</code>，再查词表得到 ID。示例不是 Qwen 实际规则。仅有词表无法完整决定切分，还需算法、优先级和预处理信息。</p>
+<p>常见算法包括 BPE、WordPiece 和 Unigram；ByteLevel 是处理字节表示的方式，可与 BPE 组合。共同的算法代码可以读取不同模型的词表，仍需逐模型匹配模板、特殊 token 和具体规则。</p>
+<h3>主要 tokenizer 类型与组合</h3>
+<table><thead><tr><th>类型</th><th>基本处理方式</th><th>常见关联与边界</th></tr></thead><tbody><tr><td>BPE</td><td>使用训练好的相邻单元合并规则及顺序形成 token。</td><td>可使用字符或字节相关基础单位；本项目 Qwen 使用 BPE 与 ByteLevel。</td></tr><tr><td>WordPiece</td><td>按词表将文字拆为子词，匹配规则与 BPE 不同。</td><td>BERT 家族的常见方案。</td></tr><tr><td>Unigram</td><td>使用带分数的候选子词模型选择切分，不依靠 BPE 合并顺序。</td><td>T5 等模型常使用相关实现。</td></tr><tr><td>WordLevel</td><td>预切分后查完整词项。</td><td>超出词表时通常需要未知项或其他处理，适合部分特定任务。</td></tr></tbody></table>
+<p>SentencePiece 是面向原始文本进行子词处理的工具及格式，可使用 Unigram 或 BPE；ByteLevel 是字节表示 / 预处理方式，不能把它们都视为与 BPE 同一维度的互斥算法。同叫 BPE 的两个 tokenizer 仍可能有不同预处理、词表、特殊 token 和合并规则。类型概览与例子参见 <a href="https://huggingface.co/docs/transformers/tokenizer_summary">Hugging Face 分词算法说明</a>。</p>
+<p>若词表只有 a、b、c、ab、bc，输入 abc 仍可能切成 ab|c 或 a|bc；除了词表，还必须明确算法及合并优先级。运行时按已固定规则处理新输入，并不重新训练 tokenizer。字节基础单位有助于覆盖不同文字的 UTF-8 表示，但不能因此推断模型理解所有语言或所有语言的 token 成本相同。</p>
+<h2 id="mask">7. attention_mask 和返回容器</h2>
+<p><code>BatchEncoding</code> 是可按键读取的编码结果容器。<code>input_ids</code> 是 token ID 列表，<code>attention_mask</code> 常用 1 表示有效位置、0 表示 padding。例如两条不同长度的序列补齐后：</p>
+<pre><code>IDs： [11, 12, 13, 14]     mask：[1, 1, 1, 1]
+IDs： [21, 22, PAD, PAD]   mask：[1, 1, 0, 0]</code></pre>
+<p>Padding mask 与模型计算出的注意力权重不同；因果 mask 另行限制不能看未来。本项目短验证要求单条无 padding 输入，故检查 mask 全 1，这不是所有合法输入都必须全 1。</p>
+<p>attention_mask 是位置可用性信息，不是模型计算出的相似度或注意力概率。某个位置 mask 为 1 也不代表当前位置可访问未来：因果约束另行生效。各模型对 padding 的具体处理和输出仍以实现为准。</p>
+<h2 id="failure">8. 案例：编码检查为何误报</h2>
+<p>首次短验证使用固定“一加一”消息，模板渲染后为 22 个 token。驱动把 <code>BatchEncoding</code> 整体与另一条路径的 ID 列表比较，输入检查失败，模型尚未运行；展开后发现三条路径的 ID 一致。修复是显式读取 <code>input_ids</code>、单独检查 mask，再比较列表。当前驱动见 <a href="../../tools/numerical_validation/qwen35/compare.py">compare.py</a>，历史过程和可复现边界见 <a href="fixed-model-numerical-validation.html#6-真实模型中的误差定位与验证设计调整">数值对照案例</a>。</p>
+<p>直接读取 <code>tokenizer.json</code> 的编码路径与 Transformers 路径可能共享底层库及数据；一致有助于发现调用错误，并不证明两条路径独立或模板语义正确。历史错误版本未保留为独立故障样例，不能将修复后验证当作重新触发原故障。</p>
+<p>比较对象的差异可以用示意数据直观呈现：<code>{"input_ids": [101, 202], "attention_mask": [1, 1]}</code> 与列表 <code>[101, 202]</code> 整体不同；取出 <code>encoded["input_ids"]</code> 后才可与列表逐项比较。本示例数字非历史输入。修复时检查 ID 内容没有变化，同时单独核对本场景的 mask，不是绕过一致性检查。Transformers 负责模板和上层容器；独立入口 <code>tokenizers.Tokenizer.from_file</code> 显式读取同一 tokenizer.json，对已经渲染的文本编码。</p>
+<h2 id="questions">9. 按提问回查</h2>
+<table><thead><tr><th>此前问题</th><th>对应内容</th></tr></thead><tbody><tr><td>Transformers 从哪里来、模型文件提供什么？</td><td><a href="#sources">程序与制品</a>、<a href="#files">本地加载</a></td></tr><tr><td>from_pretrained 具体如何组织文件，为什么有 Qwen 类？</td><td><a href="#files">本地加载</a>；类选择与文件读取的观察边界分别标注</td></tr><tr><td>端到端每步由谁、用什么文件处理，得到什么？</td><td><a href="#boundary">整体图</a>、<a href="#example">真实输入逐项示例</a></td></tr><tr><td>内部字节记号为什么存在，字节数是否一样？</td><td><a href="#bytes">字节与记号</a>，含 A、你、🙂 的实测表及两种目的</td></tr><tr><td>tokenizer 的类型、训练后是否仍执行 BPE？</td><td><a href="#bpe">类型与训练 / 使用</a></td></tr><tr><td>attention_mask 是什么、为什么容器和列表比较失败？</td><td><a href="#mask">mask 与容器</a>、<a href="#failure">历史误报</a></td></tr></tbody></table>
+<h2 id="review">复习问题</h2><ul><li>为什么加载了固定词表，仍然需要分词算法和预处理规则？</li><li>“你好”的字符数、UTF-8 字节数、内部记号数和 token 数为何不同？</li><li>对比两条编码路径时，为什么不能拿 BatchEncoding 整体与 ID 列表比较？</li><li>聊天模板、tokenizer 数据和模型权重分别来自哪里，各自解决什么问题？</li></ul>
+</main></body></html>

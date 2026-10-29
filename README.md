@@ -35,6 +35,6 @@ GPU 测试需要本机 Metal 访问能力。依赖版本、SDK 定位、完整�
 
 ## 文档与学习
 
-**[docs/README.md](docs/README.md) 是正式文档唯一总入口**，按任务导航到学习规格、模型路线、设计和操作指南。[学习笔记](learning/README.md) 整理提问与讨论中的知识点，并按要求积累有价值的真实问题案例，便于复习和复现。
+**[docs/README.md](docs/README.md) 是正式文档唯一总入口**，按任务导航到学习规格、模型路线、设计和操作指南。[学习笔记](learning/README.html) 使用 HTML 格式整理提问与讨论中的知识点，并按要求积累有价值的真实问题案例，便于复习和复现。
 
 Agent 接手先读取 [AGENTS.md](AGENTS.md) 与文档总入口，再查看仓库现状，按需展开相关专题。

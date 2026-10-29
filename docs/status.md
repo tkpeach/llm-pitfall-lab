@@ -1,6 +1,6 @@
 # 仓库现状
 
-本页描述当前代码，而非未来设计。规范与目录导航见 [总入口](README.md)，验证结果见 [当前快照](../evidence/current.json)，已学内容见 [学习索引](../learning/README.md)。维护要求见 [现状与证据审查](maintenance.md#现状与证据的对应审查)。
+本页描述当前代码，而非未来设计。规范与目录导航见 [总入口](README.md)，验证结果见 [当前快照](../evidence/current.json)，已学内容见 [学习索引](../learning/README.html)。维护要求见 [现状与证据审查](maintenance.md#现状与证据的对应审查)。
 
 ## 当前能力与证据审查
 

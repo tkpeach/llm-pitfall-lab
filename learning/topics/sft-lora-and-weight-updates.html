@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>纯文本 SFT、LoRA 与权重更新</title><style>html{color-scheme:light dark}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.75;margin:0 auto;max-width:1050px;padding:24px;color:#222;background:#fafafa}a{color:#205ab1}h1,h2,h3,h4{line-height:1.35;scroll-margin-top:1em}h2{border-bottom:1px solid #ccd3dc;padding-bottom:.35em;margin-top:2em}pre{overflow:auto;padding:1em;background:#edf1f5;border-radius:8px}code{font-family:ui-monospace,monospace}table{border-collapse:collapse;display:block;overflow:auto}th,td{border:1px solid #bbc4cf;padding:.5em;vertical-align:top}th{background:#e7edf3}blockquote{border-left:4px solid #b1bdcc;padding-left:1em;color:#555}.diagram{margin:1em 0;padding:1em;background:#eff4fb;border:1px solid #c4d2e2;border-radius:8px}.diagram-edges{display:grid;gap:.55em}.edge{display:flex;align-items:center;gap:.6em}.node{display:inline-block;border:1px solid #819cba;border-radius:7px;background:#fff;padding:.35em .7em;min-width:7em;text-align:center}.arrow{color:#305c8c;display:flex;flex-direction:column;text-align:center}.arrow small{font-size:.75em}details{margin-top:.8em;font-size:.85em} @media(prefers-color-scheme:dark){body{background:#171a1f;color:#e4e8ee}a{color:#9dc2ff}pre,th{background:#262c34}blockquote{color:#b6beca}.diagram{background:#222c38;border-color:#45556b}.node{background:#202831;border-color:#68809d}.arrow{color:#a1c9ff}}</style></head><body><nav><a href="../README.html">← 学习笔记目录</a></nav><main>
+<h1 id="纯文本-sftlora-与权重更新">纯文本 SFT、LoRA 与权重更新</h1>
+<p>本笔记解释训练目标与参数更新方式的区别，及训练结果如何改变模型行为。这里的公式和尺寸是机制示例，不是本项目已完成的目标模型训练；当前能力见 <a href="../../docs/status.md">仓库现状</a>，目标训练验收见 <a href="../../docs/design.md#%E9%A6%96%E8%BD%AE%E5%85%B3%E5%8F%A3">一期设计</a>。</p>
+<p>本组内容的阅读顺序见 <a href="model-knowledge-guide.html">模型知识导读</a>；固定 Qwen 的哪些组件参与纯文本训练、量化转换与训练的区别，见 <a href="qwen35-components-and-weight-conversion.html">Qwen3.5-4B 专题</a>。</p>
+<h2 id="1-sft-规定希望模型学到什么">1. SFT 规定希望模型学到什么</h2>
+<p>SFT 是 supervised fine-tuning，即有监督微调：在已有模型上，用输入与目标输出进行继续训练。指令 SFT 的典型样本是“任务/上下文 → 期望回答”。例如结构化抽取任务，可以给出订单文本和符合约定 schema 的目标 JSON，训练模型增加这种回答的概率。<a href="https://huggingface.co/docs/trl/sft_trainer">SFT 方法说明</a></p>
+<p>对目标回答 token 序列 y，常见目标为条件负对数似然：</p>
+<pre><code class="language-text">L = -Σ_t log p(y_t | 输入, 正确回答前缀 y_&lt;t)
+</code></pre>
+<p>训练常用正确回答前缀作为条件，而不是必须先自由生成整段回答再评分。指令 SFT 可只在回答位置计算 loss，提示和 padding 等位置按约定 mask；具体监督范围属于训练配置。然后由反向传播计算梯度，优化器更新被选为可训练的参数。</p>
+<p>“纯文本”说明输入/监督数据属于文本路径，不说明更新了多少参数。SFT 可以配合全参数微调，也可以配合 LoRA。它属于后训练方法之一，强化学习和偏好优化等还可以采用其他目标；后训练不等同于只做 SFT。</p>
+<p>其作用通常是让模型更符合目标任务、输出格式或行为要求。训练 loss 下降不证明独立任务效果提高；仍需检查数据隔离、泛化、遗忘与格式/内容错误。某条样本的更新还可能影响其他输入，不能把它理解为只给一个问句增加一条精确查表规则。</p>
+<h2 id="2-lora-规定哪些参数可以更新">2. LoRA 规定哪些参数可以更新</h2>
+<p>以列向量 x 和线性层 y = W0 x 为例。全参数微调可以更新 W0 本身。LoRA 冻结基础矩阵 W0，加入低秩增量：</p>
+<pre><code class="language-text">W0: [d_out, d_in]
+A:  [r, d_in]
+B:  [d_out, r]
+ΔW = s × B A
+输出 y = W0 x + s × B(Ax)
+</code></pre>
+<p>r 远小于输入/输出维度，s 为缩放系数，原始 LoRA 的常见约定为 alpha/r。训练时主要更新 A、B，基础 W0 保持冻结；具体选哪些层加 LoRA，由目标模块配置决定。<a href="https://arxiv.org/abs/2106.09685">LoRA 原论文</a></p>
+<p>例如，一个 2560×2560 矩阵有 6,553,600 个参数；若示意取 r=8，A、B 合计 40,960 个参数，约为原矩阵参数量的 0.625%。这是单矩阵示例，并不表示本项目已确定 rank=8 或所有投影都挂载 LoRA。</p>
+<p>冻结权重意味着优化器不更新该参数，不意味着该层不执行。基础计算仍决定激活；为了训练前面或后面的 adapter，梯度也可能需要经过冻结层对输入的导数。LoRA 能减少参数梯度和优化器状态的存储，但不会自动消除基础模型前向、必要反向与激活成本。</p>
+<h2 id="3-为什么不改基础文件也能改变模型行为">3. 为什么不改基础文件，也能改变模型行为</h2>
+<p>LoRA 激活时，模型的有效计算包含 W0 + ΔW。尽管基础文件没有变，输出的 hidden states、logits 和生成结果已经可以变化。因此“基础权重未修改”与“模型函数未改变”不是同一回事。</p>
+<table>
+<thead>
+<tr>
+<th>形式</th>
+<th>保存什么</th>
+<th>推理时如何生效</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>全参数微调结果</td>
+<td>更新后的完整权重</td>
+<td>直接加载新权重</td>
+</tr>
+<tr>
+<td>未融合 LoRA</td>
+<td>基础权重加 adapter 参数与配置</td>
+<td>在选定层计算基础项和低秩增量</td>
+</tr>
+<tr>
+<td>已融合 LoRA</td>
+<td>将增量合入后的权重</td>
+<td>使用合入后的矩阵计算</td>
+</tr>
+</tbody>
+</table>
+<p>adapter 依赖正确的基础模型、权重版本、模块映射、rank 与缩放约定，不能因为 shape 可连接就随意跨模型使用。只加载基础模型不加载 adapter，LoRA 的增量就不会参与。</p>
+<h2 id="4-量化基础模型与-lora">4. 量化基础模型与 LoRA</h2>
+<p>量化 LoRA 的思路是冻结量化基础权重，同时训练浮点 adapter。基础矩阵通过其量化表示参与计算，学习到的主要增量保存在 adapter。QLoRA 展示了这种思路，并包含 NF4、双重量化、分页优化器等具体设计。<a href="https://arxiv.org/abs/2305.14314">QLoRA 原论文</a></p>
+<p>本项目当前基础产物使用 MLX affine 4-bit/group-64，不能仅因为也使用“4-bit + LoRA”就认定完全复现了 QLoRA 的全部算法。当前产物只是经过筛选与量化的推理基座，还没有目标模型 LoRA/SFT 学习增量。</p>
+<p>融合时，通常需要把量化基础值解释为可计算数值，再加上低秩增量；若再量化，会引入新的近似，需要重新核对效果与资源。不能把增量矩阵直接加到 packed uint32 比特模式上，也不能把融合视为默认无损。</p>
+<h2 id="5-adapter-与完整恢复状态也不同">5. adapter 与完整恢复状态也不同</h2>
+<p>adapter 主要描述训练得到的参数增量。要继续同一训练，还需要优化器动量、全局步数、随机状态、数据位置/顺序及配置身份等；只保存 adapter 不构成完整训练恢复。相关机制见 <a href="../../docs/checkpoints.md">检查点约定</a>。</p>
+<p>本项目 D3 的合成 LoRA/Adam 恢复已验证，但它不代表 Qwen3.5 目标训练通过。目标混合精度递推反向、loss/梯度、一次更新与完整恢复仍需 D5 分别验收。</p>
+<h2 id="复习问题">复习问题</h2>
+<ul>
+<li>SFT 与 LoRA 分别回答什么问题，为什么可以组合？</li>
+<li>LoRA 没改基础文件，为什么输出仍可能变化？</li>
+<li>冻结一层的权重，为什么仍可能需要经过这一层传播梯度？</li>
+<li>量化转换与有监督训练都改变了参数数值，二者目的和依据有什么不同？</li>
+<li>adapter、融合权重和完整训练检查点分别包含什么？</li>
+</ul>
+
+</main></body></html>

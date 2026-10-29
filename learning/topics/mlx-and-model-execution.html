@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MLX、Metal 与模型执行</title><style>html{color-scheme:light dark}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.75;margin:0 auto;max-width:1050px;padding:24px;color:#222;background:#fafafa}a{color:#205ab1}h1,h2,h3,h4{line-height:1.35;scroll-margin-top:1em}h2{border-bottom:1px solid #ccd3dc;padding-bottom:.35em;margin-top:2em}pre{overflow:auto;padding:1em;background:#edf1f5;border-radius:8px}code{font-family:ui-monospace,monospace}table{border-collapse:collapse;display:block;overflow:auto}th,td{border:1px solid #bbc4cf;padding:.5em;vertical-align:top}th{background:#e7edf3}blockquote{border-left:4px solid #b1bdcc;padding-left:1em;color:#555}.diagram{margin:1em 0;padding:1em;background:#eff4fb;border:1px solid #c4d2e2;border-radius:8px}.diagram-edges{display:grid;gap:.55em}.edge{display:flex;align-items:center;gap:.6em}.node{display:inline-block;border:1px solid #819cba;border-radius:7px;background:#fff;padding:.35em .7em;min-width:7em;text-align:center}.arrow{color:#305c8c;display:flex;flex-direction:column;text-align:center}.arrow small{font-size:.75em}details{margin-top:.8em;font-size:.85em} @media(prefers-color-scheme:dark){body{background:#171a1f;color:#e4e8ee}a{color:#9dc2ff}pre,th{background:#262c34}blockquote{color:#b6beca}.diagram{background:#222c38;border-color:#45556b}.node{background:#202831;border-color:#68809d}.arrow{color:#a1c9ff}}</style></head><body><nav><a href="../README.html">← 学习笔记目录</a></nav><main>
+<h1 id="mlxmetal-与模型执行">MLX、Metal 与模型执行</h1>
+<h2 id="mlx-不是-python-实现的计算核心">MLX 不是 Python 实现的计算核心</h2>
+<p>MLX 的计算核心使用 C++，Apple GPU 执行通过 Metal 后端实现。Python 绑定和 C++ 接口提供不同的调用入口：</p>
+<pre><code class="language-text">Python 程序 → Python 绑定 ─┐
+                         ├→ MLX 核心 → CPU / Metal GPU
+C++ 程序 → C++ 接口 ─────┘
+</code></pre>
+<p>C++ 包含 MLX 头文件并链接原生动态库，可以直接使用张量、算子和自动微分，不必先调用 Python。通过 Python 安装包获取头文件与库，是依赖分发方式；文件放在 <code>.venv</code> 里不改变其实现语言，也不意味着原生程序需要 Python 解释器。</p>
+<p>SDK 是开发所需文件的集合，主要包括头文件、动态库、Metal 内核库和 CMake 配置。接口查阅应使用 C++ 文档及所用版本的头文件，不能假定 Python 签名与 C++ 一致。</p>
+<h2 id="metal-为什么会出现在项目中">Metal 为什么会出现在项目中</h2>
+<p>Metal 是 Apple 平台访问 GPU 的图形与计算 API；MSL 是编写其 GPU 内核的语言。C++ 主语言与 Metal 内核不是相互替代关系：C++ 组织程序和张量计算，内核处理适合 GPU 并行执行的局部计算。</p>
+<p>大部分操作可以直接使用 MLX 的现成算子。已有接口无法满足明确的数值契约，或性能分析发现值得处理的局部瓶颈时，再评估局部扩展；优先复用经过验证的计算组件。扩展会增加正确性、梯度和维护成本，前向通过也不自动说明反向已经可用。</p>
+<p>MLX 已经提供张量后端抽象，项目无需逐项重封装。薄的计算扩展层集中管理自定义内核、调用参数和版本相关接口；上层表达张量语义，不散布设备、pipeline、线程组等细节。这个边界有利于阅读和修改，但不保证未来框架升级只需改一个文件。</p>
+<h2 id="mlx-与-mlx-lm-的区别">MLX 与 MLX-LM 的区别</h2>
+<p>MLX 提供计算基础；MLX-LM 基于它提供模型结构、生成、加载与微调等上层功能，主要使用 Python。能使用 MLX 的 C++ 接口，不代表能够直接复用 MLX-LM 的 Python 模型和训练代码。</p>
+<p>从学习目标出发，可以直接复用张量运算与自动微分，同时实现固定模型所需的前向、缓存、生成和训练流程。这样能观察 token、状态、梯度与参数更新，不必重写完整通用框架。正式复用边界见 <a href="../../docs/implementation.md#mlx-%E4%B8%8E-mlx-lm-%E7%9A%84%E5%A4%8D%E7%94%A8%E8%BE%B9%E7%95%8C">实现约定</a>。</p>
+<p>代价是权重映射、布局、状态更新和梯度链路需要逐段对照。应先对齐固定输入下的中间张量与 logits，再验证缓存解码，随后验证 loss、梯度和一次参数更新，最后才优化。</p>
+<p>三个容易混淆的判断：</p>
+<ul>
+<li>生成文本合理，不等于实现正确。</li>
+<li>推理正确，不等于反向传播正确。</li>
+<li>量化权重能推理，不等于相同链路自然支持 LoRA 训练。</li>
+</ul>
+<p>分词、JSON 和文件格式等支撑工作则优先使用成熟组件，避免为了特色消耗主要学习时间。学习深度取决于能否解释、观察和诊断，而非自行实现的代码量。</p>
+<h2 id="为什么仍有-python-环境和锁文件">为什么仍有 Python 环境和锁文件</h2>
+<p><code>pyproject.toml</code> 声明辅助环境与依赖要求；<code>uv.lock</code> 保存解析出的精确依赖版本、来源与包文件哈希；<code>.venv/</code> 是安装后的本地环境。</p>
+<p>锁文件便于重建一致的依赖集合，但不固定编译器、操作系统、解释器二进制或数值执行的全部条件。Python 版本范围较窄可以表示项目只验证了这一工具环境，不代表 MLX 本身只支持这一版本。选择升级时应验证，而不是把已验证范围误认为底层能力限制。</p>
+<h2 id="复习问题">复习问题</h2>
+<ul>
+<li>Python 安装包为什么可以供应 C++ SDK？分发方式与运行调用链有什么区别？</li>
+<li>使用 MLX 自动微分后，为什么仍需要自己验证训练梯度？</li>
+<li>在什么观察结果下，才值得考虑自定义 Metal 内核？</li>
+<li>直接使用 MLX-LM 与参考它实现固定模型流程，各省去了什么、又学到了什么？</li>
+</ul>
+<p>模型接入中的分析、解析小算例和中间层对照实践见 <a href="fixed-model-numerical-validation.html">固定模型数值对照</a>。</p>
+
+</main></body></html>

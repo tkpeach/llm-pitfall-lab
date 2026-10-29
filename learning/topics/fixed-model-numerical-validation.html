@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>固定模型数值对照：从执行制品到混合缓存</title><style>html{color-scheme:light dark}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.75;margin:0 auto;max-width:1050px;padding:24px;color:#222;background:#fafafa}a{color:#205ab1}h1,h2,h3,h4{line-height:1.35;scroll-margin-top:1em}h2{border-bottom:1px solid #ccd3dc;padding-bottom:.35em;margin-top:2em}pre{overflow:auto;padding:1em;background:#edf1f5;border-radius:8px}code{font-family:ui-monospace,monospace}table{border-collapse:collapse;display:block;overflow:auto}th,td{border:1px solid #bbc4cf;padding:.5em;vertical-align:top}th{background:#e7edf3}blockquote{border-left:4px solid #b1bdcc;padding-left:1em;color:#555}.diagram{margin:1em 0;padding:1em;background:#eff4fb;border:1px solid #c4d2e2;border-radius:8px}.diagram-edges{display:grid;gap:.55em}.edge{display:flex;align-items:center;gap:.6em}.node{display:inline-block;border:1px solid #819cba;border-radius:7px;background:#fff;padding:.35em .7em;min-width:7em;text-align:center}.arrow{color:#305c8c;display:flex;flex-direction:column;text-align:center}.arrow small{font-size:.75em}details{margin-top:.8em;font-size:.85em} @media(prefers-color-scheme:dark){body{background:#171a1f;color:#e4e8ee}a{color:#9dc2ff}pre,th{background:#262c34}blockquote{color:#b6beca}.diagram{background:#222c38;border-color:#45556b}.node{background:#202831;border-color:#68809d}.arrow{color:#a1c9ff}}</style></head><body><nav><a href="../README.html">← 学习笔记目录</a></nav><main>
+<h1 id="固定模型数值对照从执行制品到混合缓存">固定模型数值对照：从执行制品到混合缓存</h1>
+<p>这份笔记记录一次真实模型接入中，如何从分析形成假设、设计验证、解释观察并调整实现。示例使用 Qwen3.5-4B、MLX 0.32.4、MLX-LM 0.32.2 和 Apple M4 / 24 GiB。实验开始于 2026-10-27，仍在推进的验证明确标为待执行；不会把代码已写好等同于已经正确。</p>
+<p>概念背景见 <a href="mlx-and-model-execution.html">MLX、Metal 与模型执行</a>。正式模型身份、操作命令和当前完成情况分别由 <a href="../../docs/model-plan.md">模型路线</a>、<a href="../../docs/model-validation.md">短验证入口</a>、<a href="../../docs/status.md">仓库现状</a> 维护；本页解释验证思路和实验中有学习价值的发现。</p>
+<p>模型知识的整体阅读路线见 <a href="model-knowledge-guide.html">导读</a>。Qwen 的组件、模块可选性、不同任务路径与转换语义集中见 <a href="qwen35-components-and-weight-conversion.html">Qwen3.5-4B 专题</a>；本页保留这些机制在真实接入中如何被检查和诊断的实验过程。</p>
+<h2 id="1-为什么先固定身份再讨论数值">1. 为什么先固定身份，再讨论数值</h2>
+<p>模型名称只确定大致对象。执行行为还取决于具体权重 revision、量化格式、权重布局、tokenizer、聊天模板，以及计算代码版本。</p>
+<p>例如，同样叫“4-bit”，仍可能有不同的分组大小、缩放系数、零点/偏置和打包顺序。原始参数为 <code>[输出维度, 输入维度]</code>，在这里每个 uint32 打包八个 4-bit 数值；group size 64 意味着每 64 个输入元素共享一组缩放与偏置。只看文件大小或权重名，不能证明执行方式一致。</p>
+<h3 id="4-bit-只规定编码宽度">4-bit 只规定编码宽度</h3>
+<p>4-bit 编码有 16 种取值，但它们代表哪些实数、哪些权重共享转换参数、如何排列到内存，都需要格式另行规定。下面是便于计算的示意，不是 MLX 的精确量化算法：若 <code>近似权重 = scale × q + bias</code>，编码 <code>q=5</code> 在 <code>scale=0.1, bias=-0.5</code> 时表示 0，在 <code>scale=0.1, bias=-1</code> 时表示 -0.5。相同编码不携带独立的实数含义。反过来，实数 0.5 可以在 <code>scale=0.1, bias=-0.5</code> 时编码为 10，在 <code>scale=0.2, bias=-1</code> 时编码为约 8（还原为 0.6，存在舍入误差）。</p>
+<p>分组决定多少权重共享同一组参数。例如一行权重的前 64 个值范围较小、后 64 个值范围较大：group size 64 可分别设置两组 scale/bias；group size 128 则两段共享一组。一般较小组可以更贴合局部范围，但需要保存更多元数据，具体误差和速度仍取决于数据与实现。本项目 group size 64 是沿每行输入维度连续分组，不是跨 64 个输出行，也不是运行时输入 token。</p>
+<p>偏置形式 <code>scale × q + bias</code> 可以与零点形式 <code>scale × (q - z)</code> 对照；当 <code>bias = -scale × z</code> 时二者表达相同映射，但零点是否必须为整数等格式限制可能不同。编码也可以采用其他方案，所以不能只凭“4-bit”推断解码公式。</p>
+<p>打包描述编码在字里的位置。例如约定第一个编码放低 4 位，8 个编码 <code>[1,2,3,4,5,6,7,8]</code> 打包为十六进制 <code>0x87654321</code>；若第一个放高 4 位则为 <code>0x12345678</code>。两者都有 8 个 4-bit 编码，却不能用同一顺序解包。本例仅说明可能的排列，不声明项目格式具体位序；实际兼容性须核对实现和格式。</p>
+<p>每个量化值本身占 <code>4/8 = 0.5</code> 字节；如果每组还保存两个 BF16 的缩放/偏置，额外占 <code>4/64 = 0.0625</code> 字节/参数。这部分合计约 <code>0.5625</code> 字节/参数，即 4.5 bit/参数，还没有计入未量化的小张量与文件头。因此，4-bit 模型文件不会简单等于参数量乘 0.5 字节。</p>
+<p>本次选择从已固定 revision 的官方文件生成一个语言执行产物，而不是把多个来源相近的量化仓库混作同一基线。源文件包含视觉和 MTP 参数；MLX-LM 的语言模型转换会排除这些部分。下载源大小因此不等于最终语言产物大小，更不等于运行内存。</p>
+<h3 id="为什么能保留语言部分模块边界与计算依赖">为什么能保留语言部分：模块边界与计算依赖</h3>
+<p>Qwen3.5 的多模态模型中，有视觉编码组件和语言主干。官方配置分别提供 <code>vision_config</code> 与 <code>text_config</code>；原始张量名称也分别属于 <code>model.visual.*</code>、<code>model.language_model.*</code>，此外还有 <code>mtp.*</code> 辅助分支。safetensors 保存具名张量及各自的 shape、dtype、偏移，转换器可以按模块完整选取，不是在一段没有边界的字节中猜哪些属于文本。</p>
+<p>参数名称说明“归谁所有”，前向计算图说明“能否独立执行”。两者都要核对。当前参考多模态实现先生成文本 embedding；输入图片时，再运行视觉编码与特征合并组件，把视觉表示放到序列中的图片位置，然后交给同一个语言主干。纯文本输入没有图片特征插入，因此语言前向无需运行视觉组件。简化数据流为：</p>
+<pre><code class="language-text">文字 → tokenizer → 文本 embedding ────────────┐
+                                            ├→ 语言主干 → 下一个 token
+图片 → 视觉编码器 → 特征合并/映射 → 图片位置表示 ┘
+</code></pre>
+<p>来源见 <a href="https://huggingface.co/Qwen/Qwen3.5-4B/blob/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a/config.json">固定官方配置</a> 与 <a href="https://github.com/huggingface/transformers/blob/main/src/transformers/models/qwen3_5/modeling_qwen3_5.py">Transformers 的多模态前向实现</a>。本次还核对了安装环境中的同模块：只有有图片/视频输入或预计算视觉特征时，才运行相应视觉特征路径；后续调用语言主干。</p>
+<p>从网络组成看，可以识别出视觉编码网络与语言网络两个主要组件，但完整模型是协作的一套多模态系统。视觉编码器负责提取并映射视觉特征，通常不能单独完成聊天生成；图文理解也依赖语言主干。保留语言主干不等于从训练历史中恢复一个“从未受多模态训练影响”的纯文本模型，更不是按“文字知识/图像知识”切分参数中的知识。</p>
+<p>两者的接口是特征向量序列。视觉编码器处理图像块，视觉合并/映射组件把输出变成与语言输入兼容的表示；它通常不先生成一句图片说明再传给语言模型。该固定配置的视觉 <code>out_hidden_size</code> 和语言 <code>hidden_size</code> 都是 2560，因此视觉表示可以进入语言主干的输入空间。但维度相同只保证结构上能够连接，如何利用这些向量还依赖训练得到的参数，以及正确的插入位置、顺序和位置编码。</p>
+<p>例如，用户提交猫的图片并问“图片里的动物是什么？”：文字被转换成文本 embedding，图片被转换成多个视觉特征向量，二者按多模态输入规则组成序列；语言主干结合问题与视觉信息，逐 token 生成答案。最终答案使用同一个语言生成主干，并非两个组件分别生成答案后再投票。视觉组件提供视觉信息，语言主干承担图文信息的后续融合和生成，视觉理解能力分布于这条协作链路中。</p>
+<p>权重可以分模块保存与加载，说明参数归属可区分；功能上仍有依赖。去掉视觉组件后，普通文本路径可以运行，但原始图片无法通过这条路径变成视觉输入。文字描述一张图片与模型实际读取该图片，是不同的输入条件。</p>
+<p>关于共享主干的含义，以及潜空间扩散、离散图像代码和混合生成架构的连接关系，见 <a href="multimodal-backbones-and-image-generation.html">多模态主干与图像生成</a>。</p>
+<p>原始目录中的两片 <code>.safetensors</code> 只是存储分片，不是一片语言、一片视觉。本次两个分片都包含语言权重，读取时需依据完整索引收集语言张量。MTP 是多 token 预测相关的辅助分支，普通逐 token 生成路径不必启用，不能把它算作第三个独立聊天模型。</p>
+<p>“精确选取参数”与“保持数值完全不变”也应分开。本次流程为：</p>
+<pre><code class="language-text">官方完整权重 → 选取语言参数 → 命名/布局适配 → 4-bit 分组量化 → 语言执行产物
+</code></pre>
+<p>去掉视觉/MTP 后，原始语言张量仍约 8.412 GB（7.83 GiB）；最终产物约 2.23 GiB，体积大幅下降主要来自量化。模块筛选可精确到具名张量，而量化属于有损近似。本次验证证明 C++ 与同一量化产物的参考路径对齐，没有证明量化模型与原始 BF16 模型完全等价，也尚未用独立任务效果评估量化损失。</p>
+<p>原始权重到执行权重还涉及语义转换。例如，参考加载器会调整卷积权重的轴布局；对其识别的原始权重，还会给特定 RMSNorm 权重加 1。这对应源实现与执行实现对归一化参数的不同约定，不能仅凭形状一致就省略，也不能对已转换过的权重再做一次相同调整。需要检查转换器实际版本和输入格式，并通过张量结果验证。</p>
+<p>准备期间还读取了 safetensors 头部。头部可以给出张量名、dtype、shape 和数据偏移，不必先把整模型装入 GPU。本次观察到语言部分 426 个原始张量，约 8.412 GB 张量数据；视觉部分约 0.667 GB，MTP 约 0.241 GB。卷积原始布局为 <code>[8192, 1, 4]</code>，而执行卷积期望 <code>[8192, 4, 1]</code>；<code>A_log</code> 为 F32，<code>dt_bias</code> 为 BF16。按分组打包和缩放/偏置的空间公式估计，语言 4-bit 张量约 2.367 GB，仍需与转换后的实际产物核对。这是存储估算，不是运行内存预测。</p>
+<p>这里有一个证据边界：上述头部观察发生在完整文件仍下载时，因此只是提前核对实现假设，不能替代下载完成后的整文件摘要校验。</p>
+<h3 id="下载时实际遇到的情况">下载时实际遇到的情况</h3>
+<p><strong>案例配置与目的。</strong> 输入是固定 revision 的两片官方权重文件；最初用单连接下载，完成后须核对官方摘要。单连接慢是观察结果，不是数值问题；在确认服务器支持 Range 后，才改为分段并发，目的是减少等待时间。当前工具允许两片并发、每片最多八个连接，具体操作和空间预检见 <a href="../../docs/model-validation.md#%E5%88%B6%E5%93%81%E4%B8%8E%E5%87%86%E5%A4%87">制品准备</a>；不能据此反推最初每次失败的并发数。</p>
+<p>初始单连接下载较慢。服务器确认支持 HTTP Range 后，改为有限并发的分段读取。随后实际出现分段响应提前结束，大小检查明确报出 <code>incomplete range download</code>；此时文件没有被当作完整权重发布。</p>
+<p>调整是保留已写入的分段，从已保存偏移继续请求，并限制重试次数；收到 <code>200</code> 或与请求不一致的 <code>Content-Range</code> 时拒绝，而不是把完整响应误追加到分段。最后仍需对重组后的完整文件核对官方摘要。大小检查发现截断，摘要检查发现内容变化，两者回答不同问题。</p>
+<p>离线验证模拟“每个分段第一次只返回 1337 字节、随后从该偏移续传”，检查重组后的每个字节；另外模拟服务器忽略 Range，确认客户端拒绝。这个验证证明客户端处理这两类响应的行为，不证明已查明真实网络截断的根因。</p>
+<p><strong>可操作的机制复现。</strong> <a href="../../tests/checks/test_model_preparation.py">传输测试</a> 在本地模拟 64 MiB 数据，分成两个 32 MiB 范围：每段首次只收到 1337 字节，后续请求从 <code>1337</code> 和 <code>32 MiB + 1337</code> 恢复，最后逐字节核对；另一用例模拟服务器返回 200，要求拒绝。运行 <code>python3 tests/checks/test_model_preparation.py</code>；测试使用临时磁盘和内存，预留至少约 64 MiB 文件空间并遵守资源规则。该模拟是修复行为验证，不是重新触发真实网络截断；原始截断的精确响应与历史失败代码未在本笔记中保留。修复依据是 Range 请求和响应位置必须对应，以及最终源文件摘要；测试不证明外部网络故障根因。</p>
+<p>空间峰值也随方案调整：分段文件与重组文件可能同时存在，不能只按最后的模型文件大小预检。原始源、量化目标、暂存、恢复余量和现存缓存都要纳入计划。卷空间预检只是当时快照，不是操作系统为本进程预留了额度。</p>
+<h2 id="2-从模型结构推导要观察哪些状态">2. 从模型结构推导要观察哪些状态</h2>
+<p>该固定配置共 32 层，每四层中的前三层使用 GatedDeltaNet，第四层使用全注意力，因此需要同时检查三类历史状态。</p>
+<p>全注意力把当前 token 的 query 与此前各 token 的 key 比较，经因果掩码和 softmax 得到权重，再加权读取对应的 value。增量推理时，每个全注意力层保存此前的 key 和 value，以便新 token 直接读取；缓存沿序列长度增长。这里“全”指可访问此前所有位置，并非允许看到未来 token。</p>
+<p>GatedDeltaNet（GDN）使用另一种历史表示：每个头维护固定形状的递推矩阵，当前输入产生的 key、value 和门控量用来衰减并修正该矩阵，再用 query 从更新后的状态读取输出。直观上它像不断更新的关联记忆，而不是保存每个历史 token 的原始 KV；固定大小也意味着不能简单等同于逐项保留全部历史。GDN 名称中的 delta 体现按预测残差修正关联，门控控制历史保留和写入；具体计算以固定实现为准。</p>
+<p>这份模型的 GDN 路径还在递推前使用因果短卷积。卷积窗口大小为 4，因此跨块继续计算时要保留此前 3 个位置的卷积输入。故 24 个 GDN 层各有卷积历史和递推矩阵；8 个全注意力层各有 key/value 缓存。三类是按用途归类：KV 一类（含两个张量），卷积历史一类，递推矩阵一类；此外还要维护共同的序列位置。并非所有 GDN 模型都必然使用同样的卷积或状态布局。</p>
+<h4 id="逐-token-看卷积历史">逐 token 看卷积历史</h4>
+<p>用人为构造的两通道向量缩小真实计算：窗口为 4，两个通道从最旧到当前的系数分别为 <code>[0.1, 0.2, 0.3, 0.4]</code> 和 <code>[0.4, 0.3, 0.2, 0.1]</code>；历史初始为三个零向量。每个 token 的卷积输入是一个向量，逐通道分别乘加，下面结果是 SiLU 前的输出：</p>
+<table>
+<thead>
+<tr>
+<th>token</th>
+<th>当前向量</th>
+<th>拼接的窗口（行是时间，列是通道）</th>
+<th>卷积输出向量</th>
+<th>保留的三行历史</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td><code>[1, 2]</code></td>
+<td><code>[[0,0], [0,0], [0,0], [1,2]]</code></td>
+<td><code>[0.4, 0.2]</code></td>
+<td><code>[[0,0], [0,0], [1,2]]</code></td>
+</tr>
+<tr>
+<td>B</td>
+<td><code>[2, 1]</code></td>
+<td><code>[[0,0], [0,0], [1,2], [2,1]]</code></td>
+<td><code>[1.1, 0.5]</code></td>
+<td><code>[[0,0], [1,2], [2,1]]</code></td>
+</tr>
+<tr>
+<td>C</td>
+<td><code>[3, 0]</code></td>
+<td><code>[[0,0], [1,2], [2,1], [3,0]]</code></td>
+<td><code>[2.0, 0.8]</code></td>
+<td><code>[[1,2], [2,1], [3,0]]</code></td>
+</tr>
+<tr>
+<td>D</td>
+<td><code>[4, 1]</code></td>
+<td><code>[[1,2], [2,1], [3,0], [4,1]]</code></td>
+<td><code>[3.0, 1.2]</code></td>
+<td><code>[[2,1], [3,0], [4,1]]</code></td>
+</tr>
+</tbody>
+</table>
+<p>例如 D 的第一通道是 <code>0.1×1 + 0.2×2 + 0.3×3 + 0.4×4 = 3</code>，第二通道是 <code>0.4×2 + 0.3×1 + 0.2×0 + 0.1×1 = 1.2</code>。缓存跨调用保留的是输入向量，不是输出，也不会自行学习。真实路径先对层输入投影得到 8192 通道的 QKV，再逐通道短卷积并经过 SiLU，拆成 q/k/v 进入递推；此处仅缩小通道数以展示结构，数字不是实测值。</p>
+<p>窗口 4 指当前及此前最多 3 个 token 位置；缓存长度 3 不等于窗口长度，更不等于 3 个字符。token 与字符不一一对应。它只约束该次卷积直接读取的输入位置，不约束整个模型的上下文：GDN 递推状态携带更早历史，全注意力层读取此前 KV，输入向量本身也可能已含前面层的上下文。固定状态对历史有压缩和覆盖风险，但不能仅凭短窗口断言模型会遗忘特定信息；需以长上下文任务和状态观察检验。</p>
+<p>短卷积的缓存大小固定，提供局部顺序混合，但单次卷积窗口不能直接读取更早位置；更长历史还需看递推和其他层。卷积系数可以描述该通道对不同相对位置的固定线性组合，而某次实际贡献还取决于输入及后续非线性；系数不等于注意力概率，也不能单独推断最终预测的因果解释。可观察缓存、各项乘积、卷积输出并通过受控干预比较，但需将观察、解释假设和干预证据分开。</p>
+<p>先看前向的数据流，有助于把后面的观测点放回计算过程：</p>
+<pre><code class="language-text">token IDs → 量化 embedding 查表
+          → [GDN 层 → GDN 层 → GDN 层 → 全注意力层] × 8
+          → 最终 RMSNorm
+          → 共享 embedding 权重的输出投影 → logits → 下一个 token
+
+每一层内部：
+x → RMSNorm → 注意力/递推混合 → 加回 x 得到 h
+h → RMSNorm → gated MLP      → 加回 h
+</code></pre>
+<p>共享 embedding 权重是说输入查表与输出投影使用同一份参数，不是说两次计算相同：前者按 token ID 取出行，后者把 hidden 与整个词表权重相乘。</p>
+<p>阅读固定参考实现时，还要分别追踪各张量的形状。全注意力的 head dimension 为 256，GDN 的 key dimension 为 128，不能因为都叫“head dim”就复用一个配置值。全注意力的 Q 投影同时生成 query 与输出 gate：它先重排成 <code>[batch, tokens, heads, 2 × head_dim]</code>，再在最后一维拆分；直接把未重排的扁平投影分成前后两半，会改变不同 head 的数据归属。这是源码分析得到的实现风险，不是本次已经触发并测得的模型故障。</p>
+<p>这里的维度是单个向量含多少个数，而 head 数量是并行的向量组数：固定模型全注意力的 Q 为 <code>[batch, tokens, 16, 256]</code>、K/V 为 <code>[batch, tokens, 4, 256]</code>（转置前），每个 query head 对应共享的 KV head；256 是每个 Q/K/V 向量的长度。GDN 卷积后 Q/K 为 <code>[batch, tokens, 16, 128]</code>，V 为 <code>[batch, tokens, 32, 128]</code>：key dimension 128 是每个 Q/K 的长度，value dimension 128 是每个 V 的长度；二者恰好相等，不是概念上必须相等。GDN 对应 Q/K 头扩展到 value 头进行计算，其每头递推状态含 value 与 key 两条轴，当前形状 <code>[batch, 32, 128, 128]</code>。两个层使用不同投影和配置，隐藏维度 2560 也不必等于头数乘单头维度。</p>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>保存什么</th>
+<th>分块执行中可能出什么错</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KV cache</td>
+<td>全注意力层此前 token 的 key/value</td>
+<td>RoPE 位置重复从零开始；追加轴错误；因果 mask 忽略已有前缀</td>
+</tr>
+<tr>
+<td>卷积历史</td>
+<td>线性注意力层短卷积所需的最近输入</td>
+<td>只保留当前块而丢掉前块末尾；保留长度错一位；保留的是卷积输出而非所需输入</td>
+</tr>
+<tr>
+<td>递推矩阵</td>
+<td>GDN 对更早历史的压缩状态</td>
+<td>每块重新清零；状态精度下降；把读取方向、头复制或衰减顺序写错</td>
+</tr>
+</tbody>
+</table>
+<p>本次配置的 KV 在单请求下形如 <code>[1, 4, 已消费 token 数, 256]</code>；卷积历史形如 <code>[1, 3, 8192]</code>；递推状态形如 <code>[1, 32, 128, 128]</code>。这些值来自固定配置，不是对任意模型通用的常数。</p>
+<p>由此可以先推导单条无 padding 推理的逻辑缓存量，再与实测核对：</p>
+<pre><code class="language-text">8 个全注意力层的 KV 增量/token：
+8 层 × 2（K/V）× 4 heads × 256 × 2 字节 = 32768 字节 = 32 KiB
+
+24 个递推层的矩阵状态：
+24 层 × 32 heads × 128 × 128 × 4 字节 = 48 MiB
+
+24 个递推层的卷积历史：
+24 层 × 3 × 8192 × 2 字节 = 1.125 MiB
+</code></pre>
+<p>KV 随已消费 token 数增长，另外两项在单请求推理中保持固定形状。实际分配还受容量预留、暂存和框架缓存影响，这个算式不是整个进程的内存峰值。训练为了反向传播可能保存中间激活或重算；不能因为推理只保留一个递推矩阵，就认为训练也只需要这份固定大小状态。</p>
+<p>“缓存正确”因此不能只表示最后生成了一段合理文字。要让相同 token 序列经过完整前向、逐 token 追加、三 token 分块追加，并比较输出与最终状态。三 token 分块还能覆盖“块内有因果关系，块前又已有历史”的情况，这是单 token decode 不会单独检验的分支。</p>
+<h2 id="3-一个已验证的小问题bf16-接口不一定保留-float32-衰减">3. 一个已验证的小问题：BF16 接口不一定保留 float32 衰减</h2>
+<h3 id="从接口检查得到假设">从接口检查得到假设</h3>
+<p>固定 SDK 的 C++ 原生 GDN 接口，会先依据 q/k dtype 转换其他输入，包括衰减系数；参考路径则保留 float32 衰减和递推状态。源码分析提示：即使最终状态为 float32，若衰减进入算子前先被舍入为 BF16，结果仍可能变化。</p>
+<p>这时不能只看“输出状态 dtype 是 float32”。精度可能在写入状态之前已经丢失，随后再转回 float32 无法恢复。</p>
+<h3 id="如何把大模型问题压缩为解析小算例">如何把大模型问题压缩为解析小算例</h3>
+<p>选择单位方向的 q/k，使矩阵递推退化成一个容易手算的标量。对每一步：</p>
+<pre><code class="language-text">先衰减：s_decay = g × s
+计算需要写入的修正：delta = beta × (v - s_decay)
+更新状态：s_new = s_decay + delta
+</code></pre>
+<p>设置初始状态为 0、<code>v = 2</code>、<code>beta = 0.25</code>、<code>g = 0.999</code>：</p>
+<pre><code class="language-text">第一步：s1 = 0 + 0.25 × 2 = 0.5
+第二步：s2 = 0.999 × 0.5 + 0.25 × (2 - 0.999 × 0.5)
+          = 0.874625
+</code></pre>
+<p><code>0.999</code> 转成 BF16 会舍入到 1；按这一衰减计算，第二步会变成 <code>0.875</code>。差值很小，但可在不加载 4B 权重的情况下明确区分两条链路。实验还使用两个 value heads，覆盖 key/query heads 的复制关系。</p>
+<p>原因可以直接从表示精度看：BF16 的显式尾数为 7 bit，在略小于 1 的区间中，相邻可表示数的间隔是 <code>2^-8 = 0.00390625</code>。1 的下一个较小可表示数为 <code>0.99609375</code>，所以 <code>0.999</code> 更接近 1。BF16 和 float32 都使用 8 bit 指数；这里关键是有效精度与舍入发生的位置。</p>
+<p>当时的第一版接入是在进入原生 GDN 前把输入提升到 float32，以保留衰减和状态，再把输出转回输入 dtype；这是针对接口精度差异的早期修复尝试。后面的真实模型对照发现这一方案仍有误差，因此当前 BF16 正式路径已换成固定参考的混合精度内核，float32 输入仍走原生路径；详见第 6 节，不能把早期方案当成当前实现。</p>
+<p><strong>配置、输入与复验。</strong> 测试从固定 SDK 与参考路径的 dtype 差异出发，构造两步输入：q/k 均为 BF16、形状 <code>[1,2,1,128]</code> 的单位方向向量；v 为 BF16 <code>[1,2,2,128]</code>、各分量为 2；衰减 g 为 float32、值 0.999；beta 为 BF16、值 0.25，初始状态为零。两个 value head 用来覆盖头复制。取矩阵首个 key 方向的状态分量，便得到上述手算递推；其他分量和完整状态仍由实际张量算子计算。具体代码见 <a href="../../tests/integration/gated_delta.cpp">GDN 集成测试</a>。</p>
+<p>原生 SDK 的 BF16 q/k 路径将 0.999 舍入到 1，预期状态因此从 0.874625 变成 0.875；测试实际记录误差 <code>0.000375032</code>。处理依据是保留参考的 float32 衰减和状态语义：早期先提升输入，最终改用来源明确的混合精度内核（见第 6 节）。当前可按 <a href="../../docs/build.md">构建指南</a> 准备支持 Metal 的环境，再运行 <code>ctest --test-dir runs/d2/build -R '^compute.gated_delta$' -V</code>，检查解析误差和分块误差不超过 <code>1e-6</code>、状态 dtype 为 float32；实际构建目录以本机配置为准。测试调用当前正式实现及 SDK 对照，不重建早期整模型失败版本。</p>
+<h3 id="当前观察与能推出的结论">当前观察与能推出的结论</h3>
+<p><a href="../../tests/integration/gated_delta.cpp">解析测试</a> 已在本机 GPU 执行通过：适配后的状态与手算值符合 <code>1e-6</code> 绝对容差，分两次调用传递状态与一次完整调用的最终状态也符合相同容差。测试另行输出未适配 SDK 路径的误差，作为诊断观察；验收依据始终是解析结果。</p>
+<p>2026-10-27 的实测摘要如下，命令为 <code>ctest --test-dir runs/d2/build -R '^compute.gated_delta$' -V</code>，在本机 Metal 可访问的环境执行：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>实测值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>手算第二步状态首分量</td>
+<td><code>0.874625</code></td>
+</tr>
+<tr>
+<td>未适配 SDK 路径的状态最大绝对误差</td>
+<td><code>0.000375032</code></td>
+</tr>
+<tr>
+<td>未适配与正式路径的 BF16 输出是否完全一致</td>
+<td>是</td>
+</tr>
+<tr>
+<td>正式计算接入的状态最大绝对误差</td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td>正式接口分块与完整执行的状态最大绝对误差</td>
+<td><code>0</code></td>
+</tr>
+</tbody>
+</table>
+<p>这里尤其值得观察：两步的 BF16 输出完全一致，内部 float32 状态却已不同。输出的低精度舍入暂时掩盖了状态误差，而后续计算仍会继续读取这份状态。这正是不能只比较生成文本或当前输出、还要检查各类缓存的一个具体例子；本小算例没有据此证明长序列一定在何时出现可见偏差。</p>
+<p>这能验证选定输入的精度与状态传递机制，不能推出整模型、长序列或训练梯度已经正确。提升计算精度还可能改变速度和临时内存；本次调整是正确性措施，没有据此宣称性能收益。</p>
+<h2 id="4-为什么要在中间层比较而不是只看最终文字">4. 为什么要在中间层比较，而不是只看最终文字</h2>
+<p>一个模型最终输出错误，可能来自最早的 embedding，也可能来自位置编码、混合状态或语言模型头。只比较最终文字会把定位范围留在整个模型中。</p>
+<p>本次预先选择这些观测点：</p>
+<table>
+<thead>
+<tr>
+<th>观测点</th>
+<th>主要帮助定位什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>embedding</td>
+<td>token IDs、量化词表查表及 tied embedding 的读取</td>
+</tr>
+<tr>
+<td>第 0 层</td>
+<td>第一层 GDN、卷积、归一化与 MLP 的组合</td>
+</tr>
+<tr>
+<td>第 3 层</td>
+<td>经过前三个递推层后的第一个全注意力层</td>
+</tr>
+<tr>
+<td>第 31 层及最终 hidden</td>
+<td>多层误差积累与最终归一化</td>
+</tr>
+<tr>
+<td>logits</td>
+<td>tied embedding 作为输出投影，以及词表上的最终分布</td>
+</tr>
+<tr>
+<td>每一层的最终混合状态</td>
+<td>前向值接近时，后续解码是否仍会从错误历史继续</td>
+</tr>
+</tbody>
+</table>
+<p>若 embedding 已不同，应先检查输入和权重，不急于分析第 31 层。若完整前向接近、分块前向才偏离，首先检查位置、mask 与状态续接。若只有某类状态差异明显，再缩小到该状态所属算子。这里是诊断优先级，不是尚未实测就断定根因。</p>
+<p>logits 是模型给词表中每个候选 token 的未归一化分数。贪心生成直接选分数最高的 token，不必先做 softmax；本次选择这种确定性生成，以免随机采样掩盖数值比较。文本“看起来一样”和完整 logits 接近是不同的检查：前者只观察了最终选中的候选，后者还检查其他候选的分数。</p>
+<p>参考与被测程序分进程执行：MLX-LM 参考退出后，再启动 C++ worker。这样降低两份模型同时驻留的风险，也能核对退出和资源行为。但两者仍共享底层 MLX，不能称为完全独立的计算后端；解析小算例可以帮助减少共同错误被两条路径一起接受的风险。</p>
+<h2 id="5-如何理解本次预先设定的判据">5. 如何理解本次预先设定的判据</h2>
+<p>离散信息和浮点数不采用同一种验收规则。</p>
+<ul>
+<li>权重身份、张量名、shape、dtype、token IDs 与生成 token，要求严格匹配。</li>
+<li>浮点中间张量使用 scaled RMSE：<code>sqrt(mean((实际-参考)^2)) / max(sqrt(mean(参考^2)), 1e-6)</code>，本次预设上限为 <code>0.01</code>。</li>
+<li>logits 额外检查最大绝对误差，本次预设上限为 <code>0.5</code>。</li>
+<li>短程贪心生成要求每个 token 一致。即使整体浮点误差不大，若改变了相近候选的排序，也能被这个检查发现。</li>
+</ul>
+<p>scaled RMSE 观察整体误差相对参考信号的尺度；最大绝对误差能发现少数大偏差。两者都不是普遍适用的 BF16“正确阈值”。这些是本次短验证开始前设定的判据，失败后应先定位，不直接调大阈值制造通过。</p>
+<p>模板检查把聊天模板渲染后的编码，与直接读取 <code>tokenizer.json</code> 的编码路径交叉核对；这两条路径可能共享底层 tokenizer，不能当作两套独立分词算法。还需结合固定来源、模板内容和特殊 token 的语义核验。本次额外发现官方模型配置中的 <code>248044</code> 对应 <code>&lt;|endoftext|&gt;</code>，tokenizer 的 EOS 则为 <code>248046</code>、<code>&lt;|im_end|&gt;</code>，短生成应明确处理两者，不能只按字段名推断编号含义。</p>
+<p>在实际模板检查中，手写输入“请只输出数字：一加一等于几？”使用 <code>add_generation_prompt=True</code>、<code>enable_thinking=False</code>，渲染结果为：</p>
+<pre><code class="language-text">&lt;|im_start|&gt;user
+请只输出数字：一加一等于几？&lt;|im_end|&gt;
+&lt;|im_start|&gt;assistant
+&lt;think&gt;
+
+&lt;/think&gt;
+
+</code></pre>
+<p>这段完整输入为 22 个 token，而不是只编码用户那一句话。关闭 thinking 时，当前模板仍给出了空的 think 段；忽略这部分会改变模型接收的前缀，即使正文看起来完全相同，也不再是相同的数值输入。后续短前向对照及生成结果见第 6 节。</p>
+<h2 id="6-真实模型中的误差定位与验证设计调整">6. 真实模型中的误差定位与验证设计调整</h2>
+<p>官方源最终完成下载并通过完整摘要核对。转换后，执行产物索引有 924 个张量，纯张量数据为 <code>2367124992</code> 字节，与此前依据头部和分组量化公式计算的值一致；包含 tokenizer、模板等文件的合计为 <code>2390248236</code> 字节，约 2.23 GiB。转换进程报告的 MLX 分配峰值为 <code>3504751518</code> 字节，约 3.26 GiB。进程随后退出；这个 MLX 指标不是进程 RSS。</p>
+<p>原始张量数变多并不表示增加了模型参数层：本次有 249 个矩阵被量化，每个原始 weight 变为 packed weight、scales 和 biases 三个张量，因此 <code>426 + 249 × 2 = 924</code>。这也帮助核对有没有遗漏量化或意外带入视觉/MTP 权重。</p>
+<p>第一次整体验证在输入检查处停止，尚未执行模型。诊断显示：当前辅助环境为 Transformers 5.20.2、tokenizers 0.23.3；<code>apply_chat_template(tokenize=True)</code> 默认得到 <code>BatchEncoding</code>，其中包含 <code>input_ids</code> 和 <code>attention_mask</code>。驱动错误地把这个容器直接与 token 列表比较，导致“编码路径不一致”的断言失败。展开后，三条路径的 22 个 token 完全一致，因此证据支持“返回类型使用错误”，不支持“tokenizer 算法不一致”。</p>
+<p>调整为显式请求 <code>return_dict=True</code>、读取 <code>input_ids</code>，并确认 attention mask 全为 1；之后仍严格比较 token 内容，没有绕过这项检查。这个例子说明：诊断不一致时，先区分容器/布局不同与数值/语义不同。</p>
+<p><strong>如何重看这个案例。</strong> 输入是 <a href="../../fixtures/qwen35-4b/numerical-input.json">固定消息</a> 中的“一加一”问题；模板参数、实际渲染内容及 22 token 见第 5 节。原配置采用模板直接编码与 tokenizer 文件编码交叉检查，以便在跑模型之前确认两条路径收到同样 token；差异是容器 <code>BatchEncoding</code> 与列表的类型，而非 token 内容。修复依据是实际返回结构：显式读取 <code>input_ids</code>、验证 mask 后比较列表，当前代码见 <a href="../../tools/numerical_validation/qwen35/compare.py">对照驱动</a>。如今运行 <a href="../../docs/model-validation.md#%E7%8B%AC%E7%AB%8B%E8%BF%9B%E7%A8%8B%E6%95%B0%E5%80%BC%E5%AF%B9%E7%85%A7">数值对照命令</a> 可验证修复后的输入检查及完整模型结果，但原错误版本未作为可执行故障样例保留，不能宣称已重新触发旧故障。</p>
+<h3 id="第一处数值问题小算例通过整模型仍不够接近">第一处数值问题：小算例通过，整模型仍不够接近</h3>
+<p><strong>初始配置与输入。</strong> 官方固定 revision 的语言制品使用 affine 4-bit/group-64 权重，执行环境为 Apple M4、MLX 0.32.4 和 MLX-LM 0.32.2；参考是 MLX-LM 独立进程，正式路径为 C++/MLX。选择量化制品与参考是为了在固定资源边界内对照同一执行权重，而不是比较量化前后效果。输入为上述固定 22-token 消息；完整序列执行，预先设定 scaled RMSE ≤ 0.01，logits 最大绝对误差 ≤ 0.5。起初采用的 float32 提升路径来自第 3 节对衰减精度的修正，且已通过两步解析测试。</p>
+<p>最初采用“把输入提升为 float32，再调用原生 GDN，输出转回 BF16”的接入方式。它保留了 float32 衰减，小算例通过，却没有自动满足真实模型的前向契约。整体验证最先报告第 10 层卷积缓存 scaled RMSE 约 <code>0.01658</code>，高于预设 <code>0.01</code>。</p>
+<p>这时首先保存失败数据，没有调大容差。由于报告按张量名称排序，第 10 层先报错不等于第 10 层是最早的计算偏差来源。扩大到全部层的观察后：</p>
+<table>
+<thead>
+<tr>
+<th>观测点</th>
+<th>最初接入与参考的 scaled RMSE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>embedding</td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td>第 0 层输出</td>
+<td><code>0.00029154</code></td>
+</tr>
+<tr>
+<td>第 1 层输出</td>
+<td><code>0.00191170</code></td>
+</tr>
+<tr>
+<td>第 3 层输出</td>
+<td><code>0.00649142</code></td>
+</tr>
+<tr>
+<td>最终 hidden</td>
+<td><code>0.01942690</code></td>
+</tr>
+<tr>
+<td>logits</td>
+<td><code>0.01464105</code>，最大绝对误差 <code>0.5</code></td>
+</tr>
+</tbody>
+</table>
+<p>可见误差从第一层已存在，并逐层积累。为缩小范围，又将第一层分为输入归一化、QKV 投影、卷积、归一化后的 q/k、衰减、beta、递推输出、门控归一化和 MLP。参考侧的诊断分解必须先与参考实际第一层完全相等，否则不能把这个分解当作可信定位依据。</p>
+<p>结果是：输入归一化、投影、卷积、q/k/v、衰减和 beta 全部相同；递推原始输出首次出现约 <code>1.90735e-6</code> 最大差异，随后进入归一化、投影与残差路径。将参考从 packed 切到 unpacked 递推布局，完整模型误差没有变化，因此这条诊断没有支持“参考 packed 布局导致差异”的假设。这个无收益结果保留，不能只记最后成功的方案。</p>
+<p>最终在计算扩展层通过 MLX C++ custom-kernel 接口，复用固定参考的短混合精度递推内核，直接接收 BF16 q/k/v 与 float32 衰减/状态，保留参考的计算路径；原生 float32 路径保留。来源与 MIT 许可见 <a href="../../third_party/mlx-lm-gdn/README.md">说明</a>，代码不导入或调用 Python。</p>
+<p>修改后，完整序列中所有层、全部缓存和 logits 与默认参考逐项完全一致。这提供了替换该局部计算后误差消失的干预证据。精确到每条 GPU 指令的归约/舍入差别尚未反汇编验证，因此不将某条未测指令写成确定根因。BF16 内核当前只定义前向，反向仍需 D5 验证；这里没有以“前向能跑”宣布训练可用。</p>
+<p><strong>重看与验证边界。</strong> 诊断顺序是“先看 embedding 和逐层输出 → 拆开第 0 层 → 找到首次差异出现在递推输出 → 尝试 packed/unpacked 排除布局假设 → 使用固定 MLX-LM 的混合精度内核并重新对照”。内核来源和许可见 <a href="../../third_party/mlx-lm-gdn/README.md">内核说明</a>，接入见 <a href="../../src/compute/gated_delta.cpp">计算扩展</a>。按 <a href="../../docs/model-validation.md#%E7%8B%AC%E7%AB%8B%E8%BF%9B%E7%A8%8B%E6%95%B0%E5%80%BC%E5%AF%B9%E7%85%A7">当前对照命令</a> 可检验修复后的三种模式；需已准备好固定制品、本机 Metal 和资源预检。该命令不切回旧版 float32 提升实现，历史失败代码和完整原始张量未在此固化，因此上述故障数值是历史观察，不是已重新触发的复现承诺。</p>
+<h3 id="第二处验证问题跨语言误差与分块固有漂移混在了一起">第二处验证问题：跨语言误差与分块固有漂移混在了一起</h3>
+<p><strong>初始配置与输入。</strong> 沿用同一 22-token 输入、同一 4-bit 制品和前述容差；验证目标是检查完整序列与增量状态。最初把 C++ 的逐 token 结果直接与参考的完整序列结果比较，意图同时检查分块与跨语言一致性，却把两种差异混进同一数字。</p>
+<p>完整前向相等后，逐 token 的 logits 相对完整参考仍有 scaled RMSE <code>0.01681646</code>、最大绝对误差 <code>0.5625</code>。如果继续只拿完整参考当唯一比较对象，会得到“缓存实现仍错”的结论，但当时证据不足。</p>
+<p>下一步先建立参考自身的逐 token 基线，然后分开比较：</p>
+<table>
+<thead>
+<tr>
+<th>比较</th>
+<th>实测 logits scaled RMSE</th>
+<th>最大绝对误差</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C++ 完整 vs 参考完整</td>
+<td><code>0</code></td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td>C++ 逐 token vs 参考逐 token</td>
+<td><code>0</code></td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td>参考逐 token vs 参考完整</td>
+<td><code>0.01681646</code></td>
+<td><code>0.5625</code></td>
+</tr>
+<tr>
+<td>C++ 逐 token vs C++ 完整</td>
+<td><code>0.01681646</code></td>
+<td><code>0.5625</code></td>
+</tr>
+</tbody>
+</table>
+<p>这说明剩余漂移也存在于参考自身；相同分块方式的 C++ 与参考并没有额外误差。BF16 在不同 token 块大小下可能选择不同形状的量化矩阵乘和归约路径，低精度舍入经过多层可累积。这里的具体数值是实际基线，不应当泛化成其他模型/输入必然有相同误差。</p>
+<p>因此修正的是对照设计：同种执行方式做跨语言检查，保留原 <code>0.01</code>/<code>0.5</code> 上限；完整与分块之间另报原始漂移，并比较：</p>
+<pre><code class="language-text">(C++ 分块 - C++ 完整) - (参考分块 - 参考完整)
+</code></pre>
+<p>这项漂移差仍使用相同阈值，以参考完整结果为归一化尺度，还要求生成 token 跨语言、跨方式严格相同。没有将原始 1.68% 改称小于 1%，也没有以较松阈值掩盖 C++ 差异。先测可信参考自身的变化，再选择能区分实现错误与数值路径变化的判据，是本次验证设计的一次重要修正。</p>
+<p><strong>判断与可操作检查。</strong> 表中同模式跨语言误差为 0，而参考自己的逐 token 与完整模式差异正好与 C++ 自身漂移相同，因此现有证据支持“比较对象不同造成误判”，不证明缓存实现对所有输入正确，也未证明漂移的具体 GPU 指令根因。修正来源是增加参考自身的逐 token 基线并比较同模式，而非改变模型计算。用 <a href="../../docs/model-validation.md#%E7%8B%AC%E7%AB%8B%E8%BF%9B%E7%A8%8B%E6%95%B0%E5%80%BC%E5%AF%B9%E7%85%A7">当前对照命令</a> 检查报告中的同模式误差、原始漂移、漂移差与输出 token；新环境下数值可能不同，要按报告判据判断，不把历史 0 当作普适承诺。</p>
+<h3 id="短验证最终观察">短验证最终观察</h3>
+<p>最终在完整序列、逐 token、三 token 分块中，共 229 项对应张量比较的最大绝对误差与 scaled RMSE 均为 0；两种分块方式相对完整方式的漂移差也均为 0。三 token 分块自身相对完整参考的 logits scaled RMSE 为 <code>0.01664138</code>、最大绝对误差 <code>0.5078125</code>，同样如实报告。三种方式都生成 <code>[17, 248046]</code>，解码为数字 <code>2</code> 后跟结束标记。</p>
+<p>本次原生 worker 的 MLX 分配峰值约 2.32–2.33 GiB，最大 RSS 约 2.30 GiB；22-token 完整输入的一次带观测 prefill 约 0.222 秒，逐 token 约 0.787 秒，三 token 分块约 0.390 秒。这些是短验证中的单次观测，含不同调用与同步方式；尚未用重复采样、预热和统一计时边界建立性能比较，不据此宣称优化收益。参考/原生总时间还包含不同的加载和摘要检查工作，不能直接比较谁更快。</p>
+<p>所有模型 worker 完成后均退出，没有把模型挂起驻留。当前结果只覆盖一条短、无 padding 文本输入，不代表长上下文、变长批量、任务效果或训练/梯度已通过。必要的过程指标已内嵌于本页，完整当前验收身份与结果仍由证据快照维护，学习记录不替代正式验收。</p>
+<h2 id="复习问题">复习问题</h2>
+<ul>
+<li>为什么相同模型名称、相同 4-bit 位数仍不足以确定同一条执行基线？</li>
+<li>状态最终是 float32，为什么仍可能丢失 float32 衰减的信息？</li>
+<li>完整前向与逐 token 前向一致后，为什么还要增加带历史的多 token 分块？</li>
+<li>如果 embedding 一致、第 0 层开始不同，你会优先检查哪些环节？</li>
+<li>scaled RMSE 很小但生成 token 不同，可能说明什么？</li>
+<li>MLX 分配峰值、进程最大 RSS、文件大小分别测量什么，为什么不能相互替代？</li>
+</ul>
+
+</main></body></html>

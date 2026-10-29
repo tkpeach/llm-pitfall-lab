@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>模型知识导读：组件、任务路径、后训练与权重制品</title><style>html{color-scheme:light dark}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.75;margin:0 auto;max-width:1050px;padding:24px;color:#222;background:#fafafa}a{color:#205ab1}h1,h2,h3,h4{line-height:1.35;scroll-margin-top:1em}h2{border-bottom:1px solid #ccd3dc;padding-bottom:.35em;margin-top:2em}pre{overflow:auto;padding:1em;background:#edf1f5;border-radius:8px}code{font-family:ui-monospace,monospace}table{border-collapse:collapse;display:block;overflow:auto}th,td{border:1px solid #bbc4cf;padding:.5em;vertical-align:top}th{background:#e7edf3}blockquote{border-left:4px solid #b1bdcc;padding-left:1em;color:#555}.diagram{margin:1em 0;padding:1em;background:#eff4fb;border:1px solid #c4d2e2;border-radius:8px}.diagram-edges{display:grid;gap:.55em}.edge{display:flex;align-items:center;gap:.6em}.node{display:inline-block;border:1px solid #819cba;border-radius:7px;background:#fff;padding:.35em .7em;min-width:7em;text-align:center}.arrow{color:#305c8c;display:flex;flex-direction:column;text-align:center}.arrow small{font-size:.75em}details{margin-top:.8em;font-size:.85em} @media(prefers-color-scheme:dark){body{background:#171a1f;color:#e4e8ee}a{color:#9dc2ff}pre,th{background:#262c34}blockquote{color:#b6beca}.diagram{background:#222c38;border-color:#45556b}.node{background:#202831;border-color:#68809d}.arrow{color:#a1c9ff}}</style></head><body><nav><a href="../README.html">← 学习笔记目录</a></nav><main>
+<h1 id="模型知识导读组件任务路径后训练与权重制品">模型知识导读：组件、任务路径、后训练与权重制品</h1>
+<p>本组笔记整理本轮围绕模型提出的问题。先建立通用机制，再用固定 Qwen3.5-4B 对照具体结构；数值诊断作为独立实践阅读。各主题正文只维护一份，本页连接它们，避免按聊天顺序反复抄写。</p>
+<h2 id="阅读顺序与问题定位">阅读顺序与问题定位</h2>
+<table>
+<thead>
+<tr>
+<th>顺序</th>
+<th>主题</th>
+<th>要回答的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>基础</td><td><a href="tokenizers-and-transformers.html">Tokenizer 与 Transformers</a></td><td>从消息、模板和字节表示到 token IDs、模型输入和解码；库与模型文件如何配合？</td></tr>
+<tr>
+<td>1</td>
+<td><a href="multimodal-backbones-and-image-generation.html">多模态主干与图像生成</a></td>
+<td>视觉编码器与语言主干如何协作？共享几个主干？读图与画图有什么区别？模态差别为什么不止 embedding？组件为何可以省略？</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="qwen35-components-and-weight-conversion.html">Qwen3.5-4B 专题</a></td>
+<td>层、head、隐藏维度如何连接？KV cache 为什么缓存 K/V？模型有哪些组件？语言参数如何选出？名称、布局和量化为何改变？</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="sft-lora-and-weight-updates.html">SFT、LoRA 与权重更新</a></td>
+<td>训练目标与更新方式有什么区别？冻结基础参数为何仍参与计算？adapter、融合权重和完整恢复状态有何区别？</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="mlx-and-model-execution.html">MLX、Metal 与模型执行</a></td>
+<td>模型结构、计算框架和 GPU 后端各做什么？为什么 C++ 主路径仍需要辅助 Python 环境？</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="fixed-model-numerical-validation.html">固定模型数值对照</a></td>
+<td>如何逐层观察并诊断低精度和缓存差异？为何小算例通过不等于完整模型正确？为什么要先测参考自身的分块漂移？</td>
+</tr>
+</tbody>
+</table>
+<h2 id="把概念连在一起">把概念连在一起</h2>
+<pre><code class="language-text">任务需要什么输入和输出
+  → 决定需要哪些编码器、主干和输出组件
+  → 用配置、模型代码和权重索引核对完整计算路径
+  → 将源权重适配为运行框架需要的表示
+  → 若量化，明确其近似与存储约定
+  → 若后训练，另选训练目标和可更新参数
+  → 分别验证前向、状态、梯度、更新和恢复
+</code></pre>
+<p>这里有三组不能混用的判断：参数能按名字筛选，不说明任意层可删；权重格式转换通过，不说明任务效果不变；前向一致，不说明训练反向或新进程恢复已正确。Qwen 专题给出前两组的具体例子，数值对照与 LoRA 笔记解释后一组。</p>
+<h2 id="知识与当前工程状态的边界">知识与当前工程状态的边界</h2>
+<p>本组笔记解释概念和案例，不据此推断用户已掌握，也不充当当前验收清单。模型身份与项目范围见 <a href="../../docs/model-plan.md">模型路线</a>，当前能力见 <a href="../../docs/status.md">仓库现状</a>，转换及验证命令见 <a href="../../docs/model-validation.md">固定目标模型短验证</a>。</p>
+
+</main></body></html>
